@@ -5,10 +5,9 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./IGameERC721.sol";
+import "./IGameLoot.sol";
 
-contract GameERC721Treasure is Ownable, Pausable, IERC721Receiver {
-
+contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
     address private signer;
     mapping(uint256 => bool) private usedNonce;
 
@@ -39,8 +38,8 @@ contract GameERC721Treasure is Ownable, Pausable, IERC721Receiver {
         usedNonce[_nonce] = true;
 
         if (_attrChanged) {
-            IGameERC721(_token).attachBatch(_tokenID, _attrIDs, _attrValues);
-            IGameERC721(_token).removeBatch(_tokenID, _attrIDsRM);
+            IGameLoot(_token).attachBatch(_tokenID, _attrIDs, _attrValues);
+            IGameLoot(_token).removeBatch(_tokenID, _attrIDsRM);
         }
 
         IERC721(_token).transferFrom(address(this), msg.sender, _tokenID);
@@ -77,8 +76,8 @@ contract GameERC721Treasure is Ownable, Pausable, IERC721Receiver {
         usedNonce[_nonce] = true;
 
         for (uint256 i; i < _tokens.length; i++) {
-            IGameERC721(_tokens[i]).attachBatch(_tokenIDs[i], _attrIDs[i], _attrValues[i]);
-            IGameERC721(_tokens[i]).removeBatch(_tokenIDs[i], _attrIDsRMs[i]);
+            IGameLoot(_tokens[i]).attachBatch(_tokenIDs[i], _attrIDs[i], _attrValues[i]);
+            IGameLoot(_tokens[i]).removeBatch(_tokenIDs[i], _attrIDsRMs[i]);
             IERC721(_tokens[i]).transferFrom(address(this), msg.sender, _tokenIDs[i]);
         }
 

@@ -4,90 +4,90 @@ const web3Utils = require('web3-utils');
 const {assert} = require('./common');
 const {currentTime, toUnit, fastForward} = require('../utils')();
 
-describe("GameERC721Equipment", async function () {
-    let gameERC721Treasure;
+describe("GameLootEquipment", async function () {
+    let gameLootTreasure;
     let body;
     let head;
     let hand;
     let leg;
     let accessory;
-    let gameERC721Suit;
+    let gameLootSuit;
 
-    let owner, user, signer;
+    let owner, user, signer, vault;
 
     beforeEach(async function () {
-        [owner, user, signer] = await hre.ethers.getSigners();
+        [owner, user, signer, vault] = await hre.ethers.getSigners();
 
-        const GameERC721Treasure = await hre.ethers.getContractFactory("GameERC721Treasure");
-        gameERC721Treasure = await GameERC721Treasure.deploy(signer.address);
-        await gameERC721Treasure.deployed();
+        const GameLootTreasure = await hre.ethers.getContractFactory("GameLootTreasure");
+        gameLootTreasure = await GameLootTreasure.deploy(signer.address);
+        await gameLootTreasure.deployed();
 
         // We get the contract to deploy
-        const GameERC721Equipment = await hre.ethers.getContractFactory("GameERC721Equipment");
+        const GameLootEquipment = await hre.ethers.getContractFactory("GameLootEquipment");
+        const cap = 20;
 
-        body = await GameERC721Equipment.deploy(
-            "Monster Engineer Body", "MEBody", gameERC721Treasure.address, signer.address);
+        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address,signer.address,  cap);
         await body.deployed();
 
-        head = await GameERC721Equipment.deploy("Monster Engineer Head", "MEHead", gameERC721Treasure.address, signer.address);
+        head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", gameLootTreasure.address, vault.address,signer.address,  cap);
         await head.deployed();
 
-        hand = await GameERC721Equipment.deploy("Monster Engineer Hand", "MEHand", gameERC721Treasure.address, signer.address);
+        hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", gameLootTreasure.address, vault.address,signer.address,  cap);
         await hand.deployed();
 
-        leg = await GameERC721Equipment.deploy("Monster Engineer Leg", "MELeg", gameERC721Treasure.address, signer.address);
+        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, vault.address,signer.address,  cap);
         await leg.deployed();
 
-        accessory = await GameERC721Equipment.deploy("Monster Engineer Accessory", "MEAccessory", gameERC721Treasure.address, signer.address);
+        accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", gameLootTreasure.address, vault.address,signer.address,  cap);
         await accessory.deployed();
 
-        const GameERC721Suit = await hre.ethers.getContractFactory("GameERC721Suit");
-        gameERC721Suit = await GameERC721Suit.deploy("Monster Engineer Suit", "MESuit", [
+        const GameLootSuit = await hre.ethers.getContractFactory("GameLootSuit");
+        gameLootSuit = await GameLootSuit.deploy("Monster Engineer Suit", "MESuit", [
             body.address,
             head.address,
             hand.address,
             leg.address,
             accessory.address,
-        ], toWei('0.01', 'ether'), signer.address);
-        await gameERC721Suit.deployed();
+        ], toWei('0.01', 'ether'),vault.address, signer.address);
+        await gameLootSuit.deployed();
 
-        await body.setSuit(gameERC721Suit.address);
-        await head.setSuit(gameERC721Suit.address);
-        await hand.setSuit(gameERC721Suit.address);
-        await leg.setSuit(gameERC721Suit.address);
-        await accessory.setSuit(gameERC721Suit.address);
+        await body.setSuit(gameLootSuit.address);
+        await head.setSuit(gameLootSuit.address);
+        await hand.setSuit(gameLootSuit.address);
+        await leg.setSuit(gameLootSuit.address);
+        await accessory.setSuit(gameLootSuit.address);
 
         //  set config param
-        await body.setPrice(toWei(0.01, "ether"));
+        await body.setPrice(toWei('0.01', "ether"));
     });
 
     it('constructor should be success: ', async () => {
-        assert.equal(await gameERC721Treasure.getSigner({from: owner.address}), signer.address);
-        assert.equal(await gameERC721Treasure.owner(), owner.address);
+        assert.equal(await gameLootTreasure.getSigner({from: owner.address}), signer.address);
+        assert.equal(await gameLootTreasure.owner(), owner.address);
 
-        assert.equal(await body.treasure(), gameERC721Treasure.address);
+        assert.equal(await body.treasure(), gameLootTreasure.address);
         assert.equal(await body.getSigner({from: owner.address}), signer.address);
-        assert.equal(await head.treasure(), gameERC721Treasure.address);
+        assert.equal(await head.treasure(), gameLootTreasure.address);
         assert.equal(await head.getSigner({from: owner.address}), signer.address);
-        assert.equal(await hand.treasure(), gameERC721Treasure.address);
+        assert.equal(await hand.treasure(), gameLootTreasure.address);
         assert.equal(await hand.getSigner({from: owner.address}), signer.address);
-        assert.equal(await leg.treasure(), gameERC721Treasure.address);
+        assert.equal(await leg.treasure(), gameLootTreasure.address);
         assert.equal(await leg.getSigner({from: owner.address}), signer.address);
-        assert.equal(await accessory.treasure(), gameERC721Treasure.address);
+        assert.equal(await accessory.treasure(), gameLootTreasure.address);
         assert.equal(await accessory.getSigner({from: owner.address}), signer.address);
 
-        assert.equal(await gameERC721Suit.price(), toWei('0.01', "ether"));
-        assert.equal(await gameERC721Suit.equipments(0), body.address);
-        assert.equal(await gameERC721Suit.equipments(1), head.address);
-        assert.equal(await gameERC721Suit.equipments(2), hand.address);
-        assert.equal(await gameERC721Suit.equipments(3), leg.address);
-        assert.equal(await gameERC721Suit.equipments(4), accessory.address);
+        assert.equal(await gameLootSuit.price(), toWei('0.01', "ether"));
+        assert.equal(await gameLootSuit.equipments(0), body.address);
+        assert.equal(await gameLootSuit.equipments(1), head.address);
+        assert.equal(await gameLootSuit.equipments(2), hand.address);
+        assert.equal(await gameLootSuit.equipments(3), leg.address);
+        assert.equal(await gameLootSuit.equipments(4), accessory.address);
     });
 
     //  equipment
     it('equipment access should revert: ', async () => {
         await assert.revert(
-            gameERC721Treasure.connect(user).getSigner(),
+            gameLootTreasure.connect(user).getSigner(),
             "Ownable: caller is not the owner"
         );
         await assert.revert(
@@ -114,39 +114,39 @@ describe("GameERC721Equipment", async function () {
 
     it('equipment access should be success: ', async () => {
         //  treasure
-        assert.equal(await gameERC721Treasure.isUsed(0), false);
-        await gameERC721Treasure.setSigner(user.address);
-        assert.equal(await gameERC721Treasure.getSigner(), user.address);
-        await gameERC721Treasure.pause();
-        await gameERC721Treasure.unPause();
+        assert.equal(await gameLootTreasure.isUsed(0), false);
+        await gameLootTreasure.setSigner(user.address);
+        assert.equal(await gameLootTreasure.getSigner(), user.address);
+        await gameLootTreasure.pause();
+        await gameLootTreasure.unPause();
 
         //  equipment
-        await body.setSuit(gameERC721Suit.address)
-        assert.equal(await body.suit(), gameERC721Suit.address);
+        await body.setSuit(gameLootSuit.address)
+        assert.equal(await body.suit(), gameLootSuit.address);
         await body.create(0, 18);
         await body.createBatch([1, 2], [18, 18]);
         assert.equal(await body.getSigner(), signer.address);
 
-        await head.setSuit(gameERC721Suit.address)
-        assert.equal(await head.suit(), gameERC721Suit.address);
+        await head.setSuit(gameLootSuit.address)
+        assert.equal(await head.suit(), gameLootSuit.address);
         await head.create(0, 18);
         await head.createBatch([1, 2], [18, 18]);
         assert.equal(await head.getSigner(), signer.address);
 
-        await hand.setSuit(gameERC721Suit.address)
-        assert.equal(await hand.suit(), gameERC721Suit.address);
+        await hand.setSuit(gameLootSuit.address)
+        assert.equal(await hand.suit(), gameLootSuit.address);
         await hand.create(0, 18);
         await hand.createBatch([1, 2], [18, 18]);
         assert.equal(await hand.getSigner(), signer.address);
 
-        await leg.setSuit(gameERC721Suit.address)
-        assert.equal(await leg.suit(), gameERC721Suit.address);
+        await leg.setSuit(gameLootSuit.address)
+        assert.equal(await leg.suit(), gameLootSuit.address);
         await leg.create(0, 18);
         await leg.createBatch([1, 2], [18, 18]);
         assert.equal(await leg.getSigner(), signer.address);
 
-        await accessory.setSuit(gameERC721Suit.address)
-        assert.equal(await accessory.suit(), gameERC721Suit.address);
+        await accessory.setSuit(gameLootSuit.address)
+        assert.equal(await accessory.suit(), gameLootSuit.address);
         await accessory.create(0, 18);
         await accessory.createBatch([1, 2], [18, 18]);
         assert.equal(await accessory.getSigner(), signer.address);
@@ -263,7 +263,7 @@ describe("GameERC721Equipment", async function () {
 
     //  suit
     /*it('suit mint should be success: ', async () => {
-        await gameERC721Suit.publicStart();
+        await gameLootSuit.publicStart();
         await body.setPubPer(maxAmount);
         await body.connect(user).mint(maxAmount);
 

@@ -15,7 +15,7 @@ interface IEquipment {
     ) external;
 }
 
-contract GameERC721Suit is ERC721, Ownable {
+contract GameLootSuit is ERC721, Ownable {
     uint64 public maxPresale;
     uint64 public maxSupply;
     uint64 public presaleAmount;
@@ -47,6 +47,8 @@ contract GameERC721Suit is ERC721, Ownable {
         vault = _vault;
         signer = _signer;
     }
+
+    receive() external payable {}
 
     /// @notice public mint
     /// @dev
