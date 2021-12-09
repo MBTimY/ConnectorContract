@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./GameLoot.sol";
+import "hardhat/console.sol";
 
 contract GameLootEquipment is GameLoot, Ownable {
     address private signer;
@@ -16,7 +17,8 @@ contract GameLootEquipment is GameLoot, Ownable {
     uint128 public maxSupply;
     uint128 public presaleAmount;
     uint128 public price;
-    uint256 public pubPer;
+    uint128 public pubPer;
+    uint128 public prePer;
     bool public publicStart;
     bool public presaleStart;
     mapping(address => bool) hasMinted;
@@ -40,11 +42,14 @@ contract GameLootEquipment is GameLoot, Ownable {
 
     /// @notice public mint
     /// @dev
-    function mint(uint256 amount_) public payable {
+    function mint(uint128 amount_) public payable {
         require(publicStart, "public mint is not start");
         require(tx.origin == msg.sender, "forbidden tx");
         require(!hasMinted[msg.sender], "has minted");
         require(amount_ <= pubPer, "exceed max per");
+        require(totalSupply < maxSupply,"sale out");
+        if(totalSupply + amount_ > maxSupply)
+            amount_ = uint128(maxSupply - totalSupply);
         require(msg.value >= price * amount_, "tx value is not correct");
 
         hasMinted[msg.sender] = true;
@@ -57,15 +62,21 @@ contract GameLootEquipment is GameLoot, Ownable {
     /// @notice presale
     /// @dev Need to sign
     function presale(
-        uint256 amount_,
+        uint128 amount_,
         uint256 nonce_,
         bytes memory signature_
     ) public payable {
         require(presaleStart, "presale is not start");
         require(!hasPresale[msg.sender], "has minted");
+        require(amount_ <= prePer, "exceed max per");
         require(msg.value >= price * amount_, "tx value is not correct");
-        require(presaleAmount + amount_ <= maxPresale, "presale out");
+        require(presaleAmount < maxPresale, "presale out");
+        require(!usedNonce[nonce_], "nonce is used");
         require(verify(msg.sender, address(this), nonce_, signature_), "sign is not correct");
+        if(presaleAmount + amount_ > maxPresale)
+            amount_ = uint128(maxPresale - presaleAmount);
+
+        usedNonce[nonce_] = true;
         presaleAmount += uint128(amount_);
 
         hasPresale[msg.sender] = true;
@@ -86,8 +97,8 @@ contract GameLootEquipment is GameLoot, Ownable {
     ) public {
         require(_exists(tokenID_), "token is not exist");
         require(!usedNonce[nonce_], "nonce is used");
-        require(verify(msg.sender, address(this), tokenID_, nonce_, attrIDs_, attrValues_, signature_), "sign is not correct");
         require(attrIDs_.length == attrValues_.length, "param length error");
+        require(verify(msg.sender, address(this), tokenID_, nonce_, attrIDs_, attrValues_, signature_), "sign is not correct");
         usedNonce[nonce_] = true;
 
         _attachBatch(tokenID_, attrIDs_, attrValues_);
@@ -202,18 +213,22 @@ contract GameLootEquipment is GameLoot, Ownable {
         price = price_;
     }
 
-    function setMaxPresale(uint64 maxPresale_) public onlyOwner {
+    function setMaxPresale(uint128 maxPresale_) public onlyOwner {
         maxPresale = maxPresale_;
     }
 
-    function setMaxSupply(uint64 maxSupply_) public onlyOwner {
+    function setMaxSupply(uint128 maxSupply_) public onlyOwner {
         maxSupply = maxSupply_;
     }
 
-    function setPubPer(uint64 pubPer_) public onlyOwner {
+    function setPubPer(uint128 pubPer_) public onlyOwner {
         pubPer = pubPer_;
     }
-    
+
+    function setPrePer(uint128 prePer_) public onlyOwner {
+        prePer = prePer_;
+    }
+
     function setCap(uint256 cap) public onlyOwner {
         _cap = cap;
     }

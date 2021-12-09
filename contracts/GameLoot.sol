@@ -106,6 +106,10 @@ abstract contract GameLoot is ERC721, IGameLoot {
         }
     }
 
+    function getCap() public view returns(uint256){
+        return _cap;
+    }
+
     function tokenURI(uint256 tokenID) override public view returns (string memory) {
         string memory output = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>.base { fill: white; font-family: serif; font-size: 14px; }</style><rect width="100%" height="100%" fill="black" /><text x="{{$x}}" y="{{$y}}" class="base">{{$attr}}</text></svg>';
         string memory json = Base64.encode(bytes(string(abi.encodePacked('{"name": "Bag #', toString(tokenID), '", "description": "GameLoot is a general NFT for games. Images, attribute name and other functionality are intentionally omitted for each game to interprets. You can use gameLoot as you like in a variety of games.", "image": "data:image/svg+xml;base64,', Base64.encode(abi.encode(output, _attrIDs[tokenID], _attrValues[tokenID])), '"}'))));

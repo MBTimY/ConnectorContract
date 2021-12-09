@@ -148,6 +148,10 @@ contract GameLootSuit is ERC721, Ownable {
         publicStart = false;
     }
 
+    function getSigner() public view onlyOwner returns (address){
+        return signer;
+    }
+
     function withdraw() public onlyOwner {
         require(address(this).balance != 0);
         payable(vault).transfer(address(this).balance);
