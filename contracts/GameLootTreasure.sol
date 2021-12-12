@@ -29,17 +29,17 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256 _tokenID,
         uint256 _nonce,
         bool _attrChanged,
-        uint256[] memory _attrIDs,
-        uint256[] memory _attrValues,
-        uint256[] memory _attrIDsRM,
+        uint128[] memory _attrIDs,
+        uint128[] memory _attrValues,
+        uint256[] memory _attrIndexesRM,
         bytes memory _signature
     ) public whenNotPaused nonceNotUsed(_nonce) {
-        require(verifyUpChain(msg.sender, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIDsRM, _signature), "sign is not correct");
+        require(verify(msg.sender, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesRM, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         if (_attrChanged) {
             IGameLoot(_token).attachBatch(_tokenID, _attrIDs, _attrValues);
-            IGameLoot(_token).removeBatch(_tokenID, _attrIDsRM);
+            IGameLoot(_token).removeBatch(_tokenID, _attrIndexesRM);
         }
 
         IERC721(_token).transferFrom(address(this), msg.sender, _tokenID);
@@ -54,7 +54,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256 _nonce,
         bytes memory _signature
     ) public whenNotPaused nonceNotUsed(_nonce) {
-        require(verifyTopUp(msg.sender, _token, _tokenID, _nonce, _signature), "sign is not correct");
+        require(verify(msg.sender, _token, _tokenID, _nonce, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         IERC721(_token).transferFrom(msg.sender, address(this), _tokenID);
@@ -67,17 +67,17 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         address[] memory _tokens,
         uint256[] memory _tokenIDs,
         uint256 _nonce,
-        uint256[][] memory _attrIDs,
-        uint256[][] memory _attrValues,
-        uint256[][] memory _attrIDsRMs,
+        uint128[][] memory _attrIDs,
+        uint128[][] memory _attrValues,
+        uint256[][] memory _attrIndexesRMs,
         bytes memory _signature
     ) public whenNotPaused nonceNotUsed(_nonce){
-        require(verifyUpChainBatch(msg.sender, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIDsRMs, _signature), "sign is not correct");
+        require(verify(msg.sender, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesRMs, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         for (uint256 i; i < _tokens.length; i++) {
             IGameLoot(_tokens[i]).attachBatch(_tokenIDs[i], _attrIDs[i], _attrValues[i]);
-            IGameLoot(_tokens[i]).removeBatch(_tokenIDs[i], _attrIDsRMs[i]);
+            IGameLoot(_tokens[i]).removeBatch(_tokenIDs[i], _attrIndexesRMs[i]);
             IERC721(_tokens[i]).transferFrom(address(this), msg.sender, _tokenIDs[i]);
         }
 
@@ -92,7 +92,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256 _nonce,
         bytes memory _signature
     ) public whenNotPaused nonceNotUsed(_nonce){
-        require(verifyTopUpBatch(msg.sender, _tokens, _tokenIDs, _nonce, _signature), "sign is not correct");
+        require(verify(msg.sender, _tokens, _tokenIDs, _nonce, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         for (uint256 i; i < _tokens.length; i++) {
@@ -101,17 +101,17 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         emit TopUpBatch(msg.sender, _tokens, _tokenIDs);
     }
 
-    function verifyTopUpBatch(
+    function verify(
         address _wallet,
         address[] memory _tokens,
         uint256[] memory _tokenIDs,
         uint256 _nonce,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWalletTopUpBatch(_wallet, _tokens, _tokenIDs, _nonce, _signature) == signer;
+        return signatureWallet(_wallet, _tokens, _tokenIDs, _nonce, _signature) == signer;
     }
 
-    function signatureWalletTopUpBatch(
+    function signatureWallet(
         address _wallet,
         address[] memory _tokens,
         uint256[] memory _tokenIDs,
@@ -124,75 +124,75 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
 
-    function verifyUpChainBatch(
+    function verify(
         address _wallet,
         address[] memory _tokens,
         uint256[] memory _tokenIDs,
         uint256 _nonce,
-        uint256[][] memory _attrIDs,
-        uint256[][] memory _attrValues,
-        uint256[][] memory _attrIDRMs,
+        uint128[][] memory _attrIDs,
+        uint128[][] memory _attrValues,
+        uint256[][] memory _attrIndexesRMs,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWalletUpChainBatch(_wallet, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIDRMs, _signature) == signer;
+        return signatureWallet(_wallet, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesRMs, _signature) == signer;
     }
 
-    function signatureWalletUpChainBatch(
+    function signatureWallet(
         address _wallet,
         address[] memory _tokens,
         uint256[] memory _tokenIDs,
         uint256 _nonce,
-        uint256[][] memory _attrIDs,
-        uint256[][] memory _attrValues,
-        uint256[][] memory _attrIDRMs,
+        uint128[][] memory _attrIDs,
+        uint128[][] memory _attrValues,
+        uint256[][] memory _attrIndexesRMs,
         bytes memory _signature
     ) internal pure returns (address){
         bytes32 hash = keccak256(
-            abi.encode(_wallet, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIDRMs)
+            abi.encode(_wallet, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesRMs)
         );
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
 
-    function verifyUpChain(
+    function verify(
         address _wallet,
         address _token,
         uint256 _tokenID,
         uint256 _nonce,
-        uint256[] memory _attrIDs,
-        uint256[] memory _attrValues,
-        uint256[] memory _attrIDsRM,
+        uint128[] memory _attrIDs,
+        uint128[] memory _attrValues,
+        uint256[] memory _attrIndexesRMs,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWalletUpChain(_wallet, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIDsRM, _signature) == signer;
+        return signatureWallet(_wallet, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesRMs, _signature) == signer;
     }
 
-    function signatureWalletUpChain(
+    function signatureWallet(
         address _wallet,
         address _token,
         uint256 _tokenID,
         uint256 _nonce,
-        uint256[] memory _attrIDs,
-        uint256[] memory _attrValues,
-        uint256[] memory _attrIDsRM,
+        uint128[] memory _attrIDs,
+        uint128[] memory _attrValues,
+        uint256[] memory _attrIndexesRMs,
         bytes memory _signature
     ) internal pure returns (address){
         bytes32 hash = keccak256(
-            abi.encode(_wallet, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIDsRM)
+            abi.encode(_wallet, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesRMs)
         );
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
 
-    function verifyTopUp(
+    function verify(
         address _wallet,
         address _token,
         uint256 _tokenID,
         uint256 _nonce,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWalletTopUp(_wallet, _token, _tokenID, _nonce, _signature) == signer;
+        return signatureWallet(_wallet, _token, _tokenID, _nonce, _signature) == signer;
     }
 
-    function signatureWalletTopUp(
+    function signatureWallet(
         address _wallet,
         address _token,
         uint256 _tokenID,

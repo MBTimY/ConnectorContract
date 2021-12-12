@@ -51,7 +51,7 @@ contract GameLootSuit is ERC721, Ownable {
     receive() external payable {}
 
     /// @notice public mint
-    /// @dev
+    /// @dev Each address can only mint once, only one can be minted at a time
     function mint() public payable {
         require(publicStart, "public mint is not start");
         require(tx.origin == msg.sender, "forbidden tx");
@@ -164,7 +164,7 @@ contract GameLootSuit is ERC721, Ownable {
     ) internal override {
         if (from == address(0)) {
             totalSupply ++;
-            require(totalSupply < maxSupply, "sold out");
+            require(totalSupply <= maxSupply, "sold out");
         }
     }
 }

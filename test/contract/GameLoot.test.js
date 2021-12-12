@@ -144,6 +144,7 @@ describe("GameLootEquipment", async function () {
     })
 
     it('gameMint should revert: ', async () => {
+        await body.setMaxSupply(100);
         const tokenID = 1;
         const nonce = 1;
         const attrIDs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -191,6 +192,7 @@ describe("GameLootEquipment", async function () {
     })
 
     it('gameMint should be success: ', async () => {
+        await body.setMaxSupply(100);
         const tokenID = 0;
         const nonce = 0;
         const attrIDs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -241,10 +243,11 @@ describe("GameLootEquipment", async function () {
             body.connect(user).mint(maxAmount, {value: v_}),
             "has minted"
         );
-
+        const t = await body.totalSupply();
+        console.log(t.toString());
         await assert.revert(
             body.connect(user1).mint(maxAmount, {value: v_}),
-            "sale out"
+            "sold out"
         );
     })
 
@@ -267,6 +270,7 @@ describe("GameLootEquipment", async function () {
         const nonce = 0;
         await body.setPrePer(amount);
         await body.setMaxPresale(amount);
+        await body.setMaxSupply(amount + 1);
         const v = toBN(price).mul(toBN(amount)).toString();
         const v1 = toBN(price).mul(toBN(amount + 1)).toString();
         const v2 = toBN(price).mul(toBN(amount - 1)).toString();
@@ -333,10 +337,11 @@ describe("GameLootEquipment", async function () {
 
     it('presale should be success: ', async () => {
         const price = await body.price();
-        const amount = 6;
+        const amount = 5;
         const nonce = 0;
         await body.openPresale();
         await body.setMaxPresale(5);
+        await body.setMaxSupply(amount);
         await body.setPrePer(amount);
 
 
@@ -437,21 +442,68 @@ describe("GameLootEquipment", async function () {
 
         assert.equal(await body.getSigner(), signer.address);
         await body.connect(user).reveal(tokenID, nonce, attrIDs, attrValues, signData);
-
-        //  TODO tokenRUI
     })
+
+    it('withdraw should be revert: ', async () => {
+        await assert.revert(
+            body.connect(user).withdraw(),
+            "Ownable: caller is not the owner"
+        );
+    })
+
+    it('withdraw should be success: ', async () => {
+        const price = await body.price();
+        const maxAmount = 5;
+        await body.openPublicSale();
+        await body.setPubPer(maxAmount);
+        await body.setMaxSupply(maxAmount + 1);
+
+        const v = toBN(price).mul(toBN(maxAmount)).toString();
+        await body.connect(user).mint(maxAmount, {value: v});
+
+        await body.connect(owner).withdraw();
+    })
+
+    it('tokenURI should be success: ', async () => {
+        await body.setMaxSupply(100);
+        const tokenID = 0;
+        const nonce = 0;
+        const attrIDs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+        const decimals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        const attrValues = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+
+        //  generate hash
+        const originalData = hre.ethers.utils.defaultAbiCoder.encode(
+            ["address", "address", "uint256", "uint256", "uint256[]", "uint256[]"],
+            [user.address, body.address, tokenID, nonce, attrIDs, attrValues]
+        );
+        const hash = hre.ethers.utils.keccak256(originalData);
+        const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
+
+        assert.equal(await body.getSigner(), signer.address);
+        await body.createBatch(attrIDs, decimals);
+        await body.connect(user).gameMint(tokenID, nonce, attrIDs, attrValues, signData);
+
+        const output = await body.tokenURI(0);
+        const strArr = output.split('data:application/json;base64,')
+        const json = Buffer.from(strArr[1], "base64").toString('ascii')
+        const imgBase64 = JSON.parse(json).image.split("data:image/svg+xml;base64,")[1]
+        console.log(imgBase64);
+
+        const img = Buffer.from(imgBase64, "base64").toString('ascii')
+        console.log(img);
+    })
+
+    //  TODO suitMint
+    //  TODO param set
+    //  TODO treasure change attribute stats
 })
 
 describe("GameLootSuit", async function () {
-    /*it('suit mint should be success: ', async () => {
-        await gameLootSuit.publicStart();
-        await body.setPubPer(maxAmount);
-        await body.connect(user).mint(maxAmount);
+    //  TODO tokenURI
 
-        assert.equal(await body.balanceOf(user.address), maxAmount);
-    })
 
-    it('suit mint should be revert: ', async () => {
+    it('mint should be revert: ', async () => {
         const maxAmount = 5;
         await body.setPubPer(maxAmount);
 
@@ -459,8 +511,41 @@ describe("GameLootSuit", async function () {
             body.connect(user).mint(maxAmount),
             "public mint is not start"
         );
-    })*/
+    })
+
+    it('mint should be success: ', async () => {
+        await gameLootSuit.publicStart();
+        await body.setPubPer(maxAmount);
+        await body.connect(user).mint(maxAmount);
+
+        assert.equal(await body.balanceOf(user.address), maxAmount);
+    })
+
+    it('presale should be revert: ', async () => {
+
+    })
+
+    it('presale should be success: ', async () => {
+
+    })
+
+    it('divide should be revert: ', async () => {
+
+    })
+
+    it('divide should be success: ', async () => {
+
+    })
+
+    it('withdraw should be revert: ', async () => {
+
+    })
+
+    it('withdraw should be success: ', async () => {
+
+    })
 })
 
 describe("GameLootTreasure", async function () {
+
 })

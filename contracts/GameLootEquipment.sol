@@ -47,9 +47,6 @@ contract GameLootEquipment is GameLoot, Ownable {
         require(tx.origin == msg.sender, "forbidden tx");
         require(!hasMinted[msg.sender], "has minted");
         require(amount_ <= pubPer, "exceed max per");
-        require(totalSupply < maxSupply,"sale out");
-        if(totalSupply + amount_ > maxSupply)
-            amount_ = uint128(maxSupply - totalSupply);
         require(msg.value >= price * amount_, "tx value is not correct");
 
         hasMinted[msg.sender] = true;
@@ -91,8 +88,8 @@ contract GameLootEquipment is GameLoot, Ownable {
     function reveal(
         uint256 tokenID_,
         uint256 nonce_,
-        uint256[] memory attrIDs_,
-        uint256[] memory attrValues_,
+        uint128[] memory attrIDs_,
+        uint128[] memory attrValues_,
         bytes memory signature_
     ) public {
         require(_exists(tokenID_), "token is not exist");
@@ -109,8 +106,8 @@ contract GameLootEquipment is GameLoot, Ownable {
     function gameMint(
         uint256 tokenID_,
         uint256 nonce_,
-        uint256[] memory attrIDs_,
-        uint256[] memory attrValues_,
+        uint128[] memory attrIDs_,
+        uint128[] memory attrValues_,
         bytes memory signature_
     ) public {
         require(!usedNonce[nonce_], "nonce is used");
@@ -129,8 +126,8 @@ contract GameLootEquipment is GameLoot, Ownable {
         address _addr,
         uint256 tokenID_,
         uint256 nonce_,
-        uint256[] memory attrIDs_,
-        uint256[] memory attrValues_,
+        uint128[] memory attrIDs_,
+        uint128[] memory attrValues_,
         bytes memory signature_
     ) public {
         require(msg.sender == suit, "suit only");
@@ -170,8 +167,8 @@ contract GameLootEquipment is GameLoot, Ownable {
         address contract_,
         uint256 tokenID_,
         uint256 nonce_,
-        uint256[] memory attrIDs_,
-        uint256[] memory attrValues_,
+        uint128[] memory attrIDs_,
+        uint128[] memory attrValues_,
         bytes memory signature_
     ) internal view returns (bool){
         return signatureWallet(wallet_, contract_, tokenID_, nonce_, attrIDs_, attrValues_, signature_) == signer;
@@ -182,8 +179,8 @@ contract GameLootEquipment is GameLoot, Ownable {
         address contract_,
         uint256 tokenID_,
         uint256 nonce_,
-        uint256[] memory attrIDs_,
-        uint256[] memory attrValues_,
+        uint128[] memory attrIDs_,
+        uint128[] memory attrValues_,
         bytes memory signature_
     ) internal pure returns (address){
         bytes32 hash = keccak256(
@@ -237,19 +234,19 @@ contract GameLootEquipment is GameLoot, Ownable {
         return signer;
     }
 
-    function create(uint256 _id, uint8 decimals_) override public onlyOwner {
-        super.create(_id, decimals_);
+    function create(uint128 attrID_, uint8 decimals_) override public onlyOwner {
+        super.create(attrID_, decimals_);
     }
 
-    function createBatch(uint256[] memory ids_, uint8[] memory decimals_) override public onlyOwner {
-        super.createBatch(ids_, decimals_);
+    function createBatch(uint128[] memory attrIDs_, uint8[] memory decimals_) override public onlyOwner {
+        super.createBatch(attrIDs_, decimals_);
     }
 
-    function attach(uint256 tokenID_, uint256 attrID_, uint256 _value) override public onlyTreasure {
+    function attach(uint256 tokenID_, uint128 attrID_, uint128 _value) override public onlyTreasure {
         _attach(tokenID_, attrID_, _value);
     }
 
-    function attachBatch(uint256 tokenID_, uint256[] memory attrIDs_, uint256[] memory _values) override public onlyTreasure {
+    function attachBatch(uint256 tokenID_, uint128[] memory attrIDs_, uint128[] memory _values) override public onlyTreasure {
         _attachBatch(tokenID_, attrIDs_, _values);
     }
 
@@ -261,11 +258,11 @@ contract GameLootEquipment is GameLoot, Ownable {
         _removeBatch(tokenID_, attrIDs_);
     }
 
-    function update(uint256 tokenID, uint256 attrIndex, uint256 value) override public onlyTreasure {
+    function update(uint256 tokenID, uint256 attrIndex, uint128 value) override public onlyTreasure {
         _update(tokenID, attrIndex, value);
     }
 
-    function updateBatch(uint256 tokenID, uint256[] memory attrIndexes, uint256[] memory values) override public onlyTreasure {
+    function updateBatch(uint256 tokenID, uint256[] memory attrIndexes, uint128[] memory values) override public onlyTreasure {
         _updateBatch(tokenID, attrIndexes, values);
     }
 
@@ -285,6 +282,7 @@ contract GameLootEquipment is GameLoot, Ownable {
     ) internal override {
         if (from == address(0)) {
             totalSupply ++;
+            require(totalSupply <= maxSupply, "sold out");
         }
     }
 
