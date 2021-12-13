@@ -500,33 +500,144 @@ describe("GameLootEquipment", async function () {
 })
 
 describe("GameLootSuit", async function () {
-    //  TODO tokenURI
+    let gameLootTreasure;
+    let body;
+    let gameLootSuit;
 
+    let owner, user, signer, vault, user1;
+
+    beforeEach(async function () {
+        [owner, user, signer, vault, user1] = await hre.ethers.getSigners();
+
+        const GameLootTreasure = await hre.ethers.getContractFactory("GameLootTreasure");
+        gameLootTreasure = await GameLootTreasure.deploy(signer.address);
+        await gameLootTreasure.deployed();
+
+        // We get the contract to deploy
+        const GameLootEquipment = await hre.ethers.getContractFactory("GameLootEquipment");
+        const cap = 20;
+
+        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address, signer.address, cap);
+        await body.deployed();
+
+        const GameLootSuit = await hre.ethers.getContractFactory("GameLootSuit");
+        gameLootSuit = await GameLootSuit.deploy("Monster Engineer Suit", "MESuit", [
+            body.address,
+        ], toWei('0.01', 'ether'), vault.address, signer.address);
+        await gameLootSuit.deployed();
+
+        //  set suit address
+        await body.setSuit(gameLootSuit.address);
+
+        //  set config param
+        await body.setPrice(toWei('0.01', "ether"));
+        await gameLootSuit.setPrice(toWei('0.01', "ether"));
+    });
 
     it('mint should be revert: ', async () => {
-        const maxAmount = 5;
-        await body.setPubPer(maxAmount);
-
         await assert.revert(
-            body.connect(user).mint(maxAmount),
+            gameLootSuit.connect(user).mint(),
             "public mint is not start"
+        );
+
+        await gameLootSuit.openPublicSale();
+        await assert.revert(
+            gameLootSuit.connect(user).mint(),
+            "tx value is not correct"
+        );
+
+        const price = await gameLootSuit.price();
+        const v = toBN(price).toString();
+        await gameLootSuit.connect(user).mint({value: v});
+        await assert.revert(
+            gameLootSuit.connect(user).mint({value: v}),
+            "has minted"
         );
     })
 
     it('mint should be success: ', async () => {
-        await gameLootSuit.publicStart();
-        await body.setPubPer(maxAmount);
-        await body.connect(user).mint(maxAmount);
+        const price = await gameLootSuit.price();
+        const v = toBN(price).toString();
+        await gameLootSuit.openPublicSale();
+        await gameLootSuit.connect(user).mint({value: v});
 
-        assert.equal(await body.balanceOf(user.address), maxAmount);
+        assert.equal(await gameLootSuit.balanceOf(user.address), 1);
+    })
+
+    it('tokenURI should be success: ', async () => {
+        const unRevealedBaseURI = "ipfs://QmXLHJ1Am75PLRUETcCnVPPPar29eUEyKDBYcQ8RaCMVXb";
+        const baseURI = "ipfs://QmccmDqqeBcuYpmvQKmfkV9hx3emXTyAd4MH6vv1Ebiija/";
+        await gameLootSuit.setUnRevealedBaseURI(unRevealedBaseURI);
+
+        //  mint
+        const price = await gameLootSuit.price();
+        const v = toBN(price).toString();
+        await gameLootSuit.openPublicSale();
+        await gameLootSuit.connect(user).mint({value: v});
+
+        assert.equal(await gameLootSuit.tokenURI(0), unRevealedBaseURI);
+
+        await gameLootSuit.setBaseTokenURI(baseURI)
+        assert.equal(await gameLootSuit.tokenURI(0), baseURI + '0');
     })
 
     it('presale should be revert: ', async () => {
+        const nonce = 0;
+        const price = await gameLootSuit.price();
+        //  generate hash
+        const originalData = hre.ethers.utils.defaultAbiCoder.encode(
+            ["address", "address", "uint256"],
+            [user.address, gameLootSuit.address, nonce]
+        );
+        const hash = hre.ethers.utils.keccak256(originalData);
+        const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
+        const signDataError = await user.signMessage(web3Utils.hexToBytes(hash));
 
+        await assert.revert(
+            gameLootSuit.connect(user).presale(nonce, signData),
+            "presale is not start"
+        );
+
+        await gameLootSuit.openPresale();
+        await assert.revert(
+            gameLootSuit.connect(user).presale(nonce, signData),
+            "tx value is not correct"
+        );
+
+        await gameLootSuit.setMaxPresale(0);
+        await assert.revert(
+            gameLootSuit.connect(user).presale(nonce, signData, {value: toBN(price).toString()}),
+            "presale out"
+        );
+
+        await gameLootSuit.setMaxPresale(2);
+        await assert.revert(
+            gameLootSuit.connect(user).presale(nonce, signDataError, {value: toBN(price).toString()}),
+            "sign is not correct"
+        );
+
+        await gameLootSuit.connect(user).presale(nonce, signData, {value: toBN(price).toString()});
+        await assert.revert(
+            gameLootSuit.connect(user).presale(nonce, signDataError, {value: toBN(price).toString()}),
+            "nonce is used"
+        );
     })
 
     it('presale should be success: ', async () => {
+        const nonce = 0;
+        const price = await gameLootSuit.price();
+        //  generate hash
+        const originalData = hre.ethers.utils.defaultAbiCoder.encode(
+            ["address", "address", "uint256"],
+            [user.address, gameLootSuit.address, nonce]
+        );
+        const hash = hre.ethers.utils.keccak256(originalData);
+        const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
 
+        await gameLootSuit.openPresale();
+        await gameLootSuit.setMaxPresale(2);
+
+        await gameLootSuit.connect(user).presale(nonce, signData, {value: toBN(price).toString()});
     })
 
     it('divide should be revert: ', async () => {
@@ -538,11 +649,24 @@ describe("GameLootSuit", async function () {
     })
 
     it('withdraw should be revert: ', async () => {
+        const price = await gameLootSuit.price();
+        const v = toBN(price).toString();
+        await gameLootSuit.openPublicSale();
+        await gameLootSuit.connect(user).mint({value: v});
 
+        await assert.revert(
+            gameLootSuit.connect(user).withdraw(),
+            "Ownable: caller is not the owner"
+        );
     })
 
     it('withdraw should be success: ', async () => {
+        const price = await gameLootSuit.price();
+        const v = toBN(price).toString();
+        await gameLootSuit.openPublicSale();
+        await gameLootSuit.connect(user).mint({value: v});
 
+        await gameLootSuit.connect(owner).withdraw();
     })
 })
 

@@ -16,6 +16,8 @@ interface IEquipment {
 }
 
 contract GameLootSuit is ERC721, Ownable {
+    using Strings for uint256;
+
     uint64 constant public maxSupply = 2200;
     uint64 public maxPresale;
     uint64 public presaleAmount;
@@ -69,13 +71,13 @@ contract GameLootSuit is ERC721, Ownable {
     /// @dev Need to sign
     function presale(uint256 _nonce, bytes memory _signature) public payable {
         require(presaleStart, "presale is not start");
-        require(!hasPresale[msg.sender], "has minted");
+        require(!usedNonce[_nonce], "nonce is used");
         require(msg.value >= price, "tx value is not correct");
         presaleAmount ++;
         require(presaleAmount <= maxPresale, "presale out");
         require(verify(msg.sender, address(this), _nonce, _signature), "sign is not correct");
 
-        hasPresale[msg.sender] = true;
+        usedNonce[_nonce] = true;
 
         _safeMint(msg.sender, totalSupply);
     }
@@ -134,10 +136,6 @@ contract GameLootSuit is ERC721, Ownable {
         maxPresale = _maxPresale;
     }
 
-    function setMaxSupply(uint64 _maxSupply) public onlyOwner {
-        maxSupply = _maxSupply;
-    }
-
     function setUnRevealedBaseURI(string memory unRevealedBaseURI_) public onlyOwner {
         unRevealedBaseURI = unRevealedBaseURI_;
     }
@@ -170,8 +168,8 @@ contract GameLootSuit is ERC721, Ownable {
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
-        string memory baseURI = _baseURI();
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : unRevealedBaseURI;
+        string memory baseURI_ = _baseURI();
+        return bytes(baseURI_).length > 0 ? string(abi.encodePacked(baseURI_, tokenId.toString())) : unRevealedBaseURI;
     }
 
     function _baseURI() internal view override returns (string memory) {
