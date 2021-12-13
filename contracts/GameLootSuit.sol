@@ -16,11 +16,14 @@ interface IEquipment {
 }
 
 contract GameLootSuit is ERC721, Ownable {
+    uint64 constant public maxSupply = 2200;
     uint64 public maxPresale;
-    uint64 public maxSupply;
     uint64 public presaleAmount;
-    uint256 public totalSupply;
+    uint64 public totalSupply;
     address public vault;
+
+    string private baseURI;
+    string private unRevealedBaseURI;
 
     uint256 public price;
     bool public publicStart;
@@ -57,7 +60,6 @@ contract GameLootSuit is ERC721, Ownable {
         require(tx.origin == msg.sender, "forbidden tx");
         require(!hasMinted[msg.sender], "has minted");
         require(msg.value >= price, "tx value is not correct");
-
 
         hasMinted[msg.sender] = true;
         _safeMint(msg.sender, totalSupply);
@@ -120,6 +122,10 @@ contract GameLootSuit is ERC721, Ownable {
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
 
+    function setBaseTokenURI(string memory _uri) public onlyOwner {
+        baseURI = _uri;
+    }
+
     function setPrice(uint256 _price) public onlyOwner {
         price = _price;
     }
@@ -130,6 +136,10 @@ contract GameLootSuit is ERC721, Ownable {
 
     function setMaxSupply(uint64 _maxSupply) public onlyOwner {
         maxSupply = _maxSupply;
+    }
+
+    function setUnRevealedBaseURI(string memory unRevealedBaseURI_) public onlyOwner {
+        unRevealedBaseURI = unRevealedBaseURI_;
     }
 
     function openPresale() public onlyOwner {
@@ -155,6 +165,17 @@ contract GameLootSuit is ERC721, Ownable {
     function withdraw() public onlyOwner {
         require(address(this).balance != 0);
         payable(vault).transfer(address(this).balance);
+    }
+
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+
+        string memory baseURI = _baseURI();
+        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : unRevealedBaseURI;
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
     }
 
     function _beforeTokenTransfer(
