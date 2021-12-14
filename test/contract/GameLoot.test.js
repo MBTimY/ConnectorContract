@@ -494,14 +494,13 @@ describe("GameLootEquipment", async function () {
         console.log(img);
     })
 
-    //  TODO suitMint
-    //  TODO param set
+    //  TODO param doc
     //  TODO treasure change attribute stats
 })
 
 describe("GameLootSuit", async function () {
     let gameLootTreasure;
-    let body;
+    let body, head, hand, leg, accessory;
     let gameLootSuit;
 
     let owner, user, signer, vault, user1;
@@ -520,17 +519,41 @@ describe("GameLootSuit", async function () {
         body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address, signer.address, cap);
         await body.deployed();
 
+        head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", gameLootTreasure.address, vault.address, signer.address, cap);
+        await head.deployed();
+
+        hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", gameLootTreasure.address, vault.address, signer.address, cap);
+        await hand.deployed();
+
+        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, vault.address, signer.address, cap);
+        await leg.deployed();
+
+        accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", gameLootTreasure.address, vault.address, signer.address, cap);
+        await accessory.deployed();
+
         const GameLootSuit = await hre.ethers.getContractFactory("GameLootSuit");
         gameLootSuit = await GameLootSuit.deploy("Monster Engineer Suit", "MESuit", [
             body.address,
+            head.address,
+            hand.address,
+            leg.address,
+            accessory.address,
         ], toWei('0.01', 'ether'), vault.address, signer.address);
         await gameLootSuit.deployed();
 
         //  set suit address
         await body.setSuit(gameLootSuit.address);
+        await head.setSuit(gameLootSuit.address);
+        await hand.setSuit(gameLootSuit.address);
+        await leg.setSuit(gameLootSuit.address);
+        await accessory.setSuit(gameLootSuit.address);
 
         //  set config param
         await body.setPrice(toWei('0.01', "ether"));
+        await head.setPrice(toWei('0.01', "ether"));
+        await hand.setPrice(toWei('0.01', "ether"));
+        await leg.setPrice(toWei('0.01', "ether"));
+        await accessory.setPrice(toWei('0.01', "ether"));
         await gameLootSuit.setPrice(toWei('0.01', "ether"));
     });
 
@@ -641,11 +664,112 @@ describe("GameLootSuit", async function () {
     })
 
     it('divide should be revert: ', async () => {
+        //  mint
+        const price = await gameLootSuit.price();
+        const v = toBN(price).toString();
+        await gameLootSuit.openPublicSale();
+        await gameLootSuit.connect(user).mint({value: v});
+        await gameLootSuit.connect(user1).mint({value: v});
 
+        await body.setMaxSupply(2);
+        await head.setMaxSupply(2);
+        await hand.setMaxSupply(2);
+        await leg.setMaxSupply(2);
+        await accessory.setMaxSupply(2);
+
+
+        const decimals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        const tokenID = 0;
+        const equipIDs = [0, 0, 0, 0, 0];
+        const attrIDs_ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        const attrIDs = [attrIDs_, attrIDs_, attrIDs_, attrIDs_, attrIDs_];
+        const values_ = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+        const values = [values_, values_, values_, values_, values_]
+        const nonce = 0;
+
+        //  generate hash
+        const originalData = hre.ethers.utils.defaultAbiCoder.encode(
+            ["uint256", "address", "uint256[]", "uint256[][]", "uint256[][]", "uint256"],
+            [tokenID, gameLootSuit.address, equipIDs, attrIDs, values, nonce]
+        );
+        const hash = hre.ethers.utils.keccak256(originalData);
+        const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
+
+        await body.createBatch(attrIDs_, decimals);
+        await head.createBatch(attrIDs_, decimals);
+        await hand.createBatch(attrIDs_, decimals);
+        await leg.createBatch(attrIDs_, decimals);
+        await accessory.createBatch(attrIDs_, decimals);
+
+        await assert.revert(
+            gameLootSuit.connect(owner).divide(tokenID, equipIDs, attrIDs, values, nonce, signData),
+            "owner missed"
+        );
+
+        const equipIDsError = [0, 0, 0, 0, 0,0];
+        await assert.revert(
+            gameLootSuit.connect(user).divide(tokenID, equipIDsError, attrIDs, values, nonce, signData),
+            "equips length error"
+        );
+
+        const attrIDsError = [attrIDs_, attrIDs_, attrIDs_, attrIDs_, attrIDs_, attrIDs_];
+        const valuesError = [values_, values_, values_, values_, values_, values_]
+        await assert.revert(
+            gameLootSuit.connect(user).divide(tokenID, equipIDs, attrIDsError, valuesError, nonce, signData),
+            "params length error"
+        );
+
+        const signDataError = await user.signMessage(web3Utils.hexToBytes(hash));
+        await assert.revert(
+            gameLootSuit.connect(user).divide(tokenID, equipIDs, attrIDs, values, nonce, signDataError),
+            "sign is not correct"
+        );
+
+        await gameLootSuit.connect(user).divide(tokenID, equipIDs, attrIDs, values, nonce, signData);
+        await assert.revert(
+            gameLootSuit.connect(user1).divide(1, equipIDs, attrIDs, values, nonce, signData),
+            "nonce is used"
+        );
     })
 
     it('divide should be success: ', async () => {
+        const price = await gameLootSuit.price();
+        const v = toBN(price).toString();
+        await gameLootSuit.openPublicSale();
+        await gameLootSuit.connect(user).mint({value: v});
+        await gameLootSuit.connect(user1).mint({value: v});
 
+        await body.setMaxSupply(2);
+        await head.setMaxSupply(2);
+        await hand.setMaxSupply(2);
+        await leg.setMaxSupply(2);
+        await accessory.setMaxSupply(2);
+
+
+        const decimals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        const tokenID = 0;
+        const equipIDs = [0, 0, 0, 0, 0];
+        const attrIDs_ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        const attrIDs = [attrIDs_, attrIDs_, attrIDs_, attrIDs_, attrIDs_];
+        const values_ = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+        const values = [values_, values_, values_, values_, values_]
+        const nonce = 0;
+
+        //  generate hash
+        const originalData = hre.ethers.utils.defaultAbiCoder.encode(
+            ["uint256", "address", "uint256[]", "uint256[][]", "uint256[][]", "uint256"],
+            [tokenID, gameLootSuit.address, equipIDs, attrIDs, values, nonce]
+        );
+        const hash = hre.ethers.utils.keccak256(originalData);
+        const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
+
+        await body.createBatch(attrIDs_, decimals);
+        await head.createBatch(attrIDs_, decimals);
+        await hand.createBatch(attrIDs_, decimals);
+        await leg.createBatch(attrIDs_, decimals);
+        await accessory.createBatch(attrIDs_, decimals);
+
+        await gameLootSuit.connect(user).divide(tokenID, equipIDs, attrIDs, values, nonce, signData);
     })
 
     it('withdraw should be revert: ', async () => {

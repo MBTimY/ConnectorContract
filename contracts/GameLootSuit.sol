@@ -8,10 +8,8 @@ interface IEquipment {
     function suitMint(
         address _addr,
         uint256 _tokenID,
-        uint256 _nonce,
-        uint256[] memory _attrIDs,
-        uint256[] memory _attrValues,
-        bytes memory _signature
+        uint128[] memory _attrIDs,
+        uint128[] memory _attrValues
     ) external;
 }
 
@@ -87,20 +85,51 @@ contract GameLootSuit is ERC721, Ownable {
     function divide(
         uint256 _tokenID,
         uint256[] memory _equipIDs,
-        uint256[][] memory _attrIDs,
-        uint256[][] memory _values,
-        uint256[] memory _nonce,
-        bytes[] memory _signatures
+        uint128[][] memory _attrIDs,
+        uint128[][] memory _values,
+        uint256 _nonce,
+        bytes memory _signature
     ) public {
         require(ownerOf(_tokenID) == msg.sender, "owner missed");
+        require(!usedNonce[_nonce], "nonce is used");
         require(_equipIDs.length == equipments.length, "equips length error");
         require(_attrIDs.length == _values.length && equipments.length == _attrIDs.length, "params length error");
+        require(verify(_tokenID, address(this), _equipIDs, _attrIDs, _values, _nonce, _signature), "sign is not correct");
+
+        usedNonce[_nonce] = true;
 
         _burn(_tokenID);
 
         for (uint256 i; i < equipments.length; i++) {
-            IEquipment(equipments[i]).suitMint(msg.sender, _equipIDs[i], _nonce[i], _attrIDs[i], _values[i], _signatures[i]);
+            IEquipment(equipments[i]).suitMint(msg.sender, _equipIDs[i], _attrIDs[i], _values[i]);
         }
+    }
+
+    function verify(
+        uint256 _tokenID,
+        address _token,
+        uint256[] memory _equipIDs,
+        uint128[][] memory _attrIDs,
+        uint128[][] memory _values,
+        uint256 _nonce,
+        bytes memory _signature
+    ) internal view returns (bool){
+        return signatureWallet(_tokenID, _token, _equipIDs, _attrIDs, _values, _nonce, _signature) == signer;
+    }
+
+    function signatureWallet(
+        uint256 _tokenID,
+        address _token,
+        uint256[] memory _equipIDs,
+        uint128[][] memory _attrIDs,
+        uint128[][] memory _values,
+        uint256 _nonce,
+        bytes memory _signature
+    ) internal pure returns (address){
+        bytes32 hash = keccak256(
+            abi.encode(_tokenID, _token, _equipIDs, _attrIDs, _values, _nonce)
+        );
+        return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
 
     function verify(
@@ -183,7 +212,7 @@ contract GameLootSuit is ERC721, Ownable {
     ) internal override {
         if (from == address(0)) {
             totalSupply ++;
-            require(totalSupply <= maxSupply, "sold out");
+            require(totalSupply <= maxSupply, "suit sold out");
         }
     }
 }

@@ -125,16 +125,11 @@ contract GameLootEquipment is GameLoot, Ownable {
     function suitMint(
         address _addr,
         uint256 tokenID_,
-        uint256 nonce_,
         uint128[] memory attrIDs_,
-        uint128[] memory attrValues_,
-        bytes memory signature_
+        uint128[] memory attrValues_
     ) public {
         require(msg.sender == suit, "suit only");
-        require(!usedNonce[nonce_], "nonce is used");
-        require(verify(_addr, address(this), tokenID_, nonce_, attrIDs_, attrValues_, signature_), "sign is not correct");
         require(attrIDs_.length == attrValues_.length, "param length error");
-        usedNonce[nonce_] = true;
 
         _attachBatch(tokenID_, attrIDs_, attrValues_);
 
