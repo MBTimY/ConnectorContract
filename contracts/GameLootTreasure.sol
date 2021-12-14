@@ -28,19 +28,24 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         address _token,
         uint256 _tokenID,
         uint256 _nonce,
-        bool _attrChanged,
         uint128[] memory _attrIDs,
         uint128[] memory _attrValues,
+        uint256[] memory _attrIndexesUpdate,
+        uint128[] memory _attrValuesUpdate,
         uint256[] memory _attrIndexesRM,
         bytes memory _signature
     ) public whenNotPaused nonceNotUsed(_nonce) {
-        require(verify(msg.sender, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesRM, _signature), "sign is not correct");
+        require(verify(msg.sender, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRM, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
-        if (_attrChanged) {
+        if (_attrIDs.length != 0)
             IGameLoot(_token).attachBatch(_tokenID, _attrIDs, _attrValues);
+
+        if (_attrIndexesUpdate.length != 0)
+            IGameLoot(_token).updateBatch(_tokenID, _attrIndexesUpdate, _attrValuesUpdate);
+
+        if (_attrIndexesRM.length != 0)
             IGameLoot(_token).removeBatch(_tokenID, _attrIndexesRM);
-        }
 
         IERC721(_token).transferFrom(address(this), msg.sender, _tokenID);
         emit UpChain(msg.sender, _token, _tokenID);
@@ -69,15 +74,24 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256 _nonce,
         uint128[][] memory _attrIDs,
         uint128[][] memory _attrValues,
+        uint256[][] memory _attrIndexesUpdate,
+        uint128[][] memory _attrValuesUpdate,
         uint256[][] memory _attrIndexesRMs,
         bytes memory _signature
-    ) public whenNotPaused nonceNotUsed(_nonce){
-        require(verify(msg.sender, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesRMs, _signature), "sign is not correct");
+    ) public whenNotPaused nonceNotUsed(_nonce) {
+        require(verify(msg.sender, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         for (uint256 i; i < _tokens.length; i++) {
-            IGameLoot(_tokens[i]).attachBatch(_tokenIDs[i], _attrIDs[i], _attrValues[i]);
-            IGameLoot(_tokens[i]).removeBatch(_tokenIDs[i], _attrIndexesRMs[i]);
+            if (_attrIDs[i].length != 0)
+                IGameLoot(_tokens[i]).attachBatch(_tokenIDs[i], _attrIDs[i], _attrValues[i]);
+
+            if (_attrIndexesUpdate[i].length != 0)
+                IGameLoot(_tokens[i]).updateBatch(_tokenIDs[i], _attrIndexesUpdate[i], _attrValuesUpdate[i]);
+
+            if (_attrIndexesRMs[i].length != 0)
+                IGameLoot(_tokens[i]).removeBatch(_tokenIDs[i], _attrIndexesRMs[i]);
+
             IERC721(_tokens[i]).transferFrom(address(this), msg.sender, _tokenIDs[i]);
         }
 
@@ -91,7 +105,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256[] memory _tokenIDs,
         uint256 _nonce,
         bytes memory _signature
-    ) public whenNotPaused nonceNotUsed(_nonce){
+    ) public whenNotPaused nonceNotUsed(_nonce) {
         require(verify(msg.sender, _tokens, _tokenIDs, _nonce, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
@@ -131,10 +145,12 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256 _nonce,
         uint128[][] memory _attrIDs,
         uint128[][] memory _attrValues,
+        uint256[][] memory _attrIndexesUpdate,
+        uint128[][] memory _attrValuesUpdate,
         uint256[][] memory _attrIndexesRMs,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWallet(_wallet, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesRMs, _signature) == signer;
+        return signatureWallet(_wallet, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs, _signature) == signer;
     }
 
     function signatureWallet(
@@ -144,11 +160,13 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256 _nonce,
         uint128[][] memory _attrIDs,
         uint128[][] memory _attrValues,
+        uint256[][] memory _attrIndexesUpdate,
+        uint128[][] memory _attrValuesUpdate,
         uint256[][] memory _attrIndexesRMs,
         bytes memory _signature
     ) internal pure returns (address){
         bytes32 hash = keccak256(
-            abi.encode(_wallet, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesRMs)
+            abi.encode(_wallet, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs)
         );
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
@@ -160,10 +178,12 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256 _nonce,
         uint128[] memory _attrIDs,
         uint128[] memory _attrValues,
+        uint256[] memory _attrIndexesUpdate,
+        uint128[] memory _attrValuesUpdate,
         uint256[] memory _attrIndexesRMs,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWallet(_wallet, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesRMs, _signature) == signer;
+        return signatureWallet(_wallet, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs, _signature) == signer;
     }
 
     function signatureWallet(
@@ -173,11 +193,13 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256 _nonce,
         uint128[] memory _attrIDs,
         uint128[] memory _attrValues,
+        uint256[] memory _attrIndexesUpdate,
+        uint128[] memory _attrValuesUpdate,
         uint256[] memory _attrIndexesRMs,
         bytes memory _signature
     ) internal pure returns (address){
         bytes32 hash = keccak256(
-            abi.encode(_wallet, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesRMs)
+            abi.encode(_wallet, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs)
         );
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
