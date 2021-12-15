@@ -1,8 +1,7 @@
 const hre = require('hardhat');
-const {toBN, toWei, soliditySha3, encodePacked} = require('web3-utils');
+const {toBN, toWei} = require('web3-utils');
 const web3Utils = require('web3-utils');
 const {assert} = require('./common');
-const {currentTime, toUnit, fastForward} = require('../utils')();
 
 describe("GameLootEquipment", async function () {
     let gameLootTreasure;
@@ -243,8 +242,6 @@ describe("GameLootEquipment", async function () {
             body.connect(user).mint(maxAmount, {value: v_}),
             "has minted"
         );
-        const t = await body.totalSupply();
-        console.log(t.toString());
         await assert.revert(
             body.connect(user1).mint(maxAmount, {value: v_}),
             "sold out"
@@ -488,13 +485,9 @@ describe("GameLootEquipment", async function () {
         const strArr = output.split('data:application/json;base64,')
         const json = Buffer.from(strArr[1], "base64").toString('ascii')
         const imgBase64 = JSON.parse(json).image.split("data:image/svg+xml;base64,")[1]
-        console.log(imgBase64);
 
         const img = Buffer.from(imgBase64, "base64").toString('ascii')
-        console.log(img);
     })
-
-    //  TODO param doc
 })
 
 describe("GameLootSuit", async function () {

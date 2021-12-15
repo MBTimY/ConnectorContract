@@ -30,10 +30,10 @@ contract GameERC20Treasure is Ownable, Pausable {
         uint256 _nonce,
         bytes memory _signature
     ) public nonceNotUsed(_nonce) whenNotPaused {
-        require(verify(msg.sender, _amount, _nonce, _signature), "sign is not correct");
+        require(verify(msg.sender, token, _amount, _nonce, this.upChain.selector, _signature), "sign is not correct");
         _usedNonce[_nonce] = true;
 
-        IERC20(token).safeTransferFrom(address(this), msg.sender, _amount);
+        IERC20(token).safeTransfer(msg.sender, _amount);
         emit UpChain(msg.sender, _amount);
     }
 
@@ -42,7 +42,7 @@ contract GameERC20Treasure is Ownable, Pausable {
         uint256 _nonce,
         bytes memory _signature
     ) public nonceNotUsed(_nonce) whenNotPaused {
-        require(verify(msg.sender, _amount, _nonce, _signature), "sign is not correct");
+        require(verify(msg.sender, token, _amount, _nonce, this.topUp.selector, _signature), "sign is not correct");
         _usedNonce[_nonce] = true;
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), _amount);
@@ -51,20 +51,24 @@ contract GameERC20Treasure is Ownable, Pausable {
 
     function verify(
         address _wallet,
+        address _token,
         uint256 _amount,
         uint256 _nonce,
+        bytes4 _selector,
         bytes memory _signature
     ) public view returns (bool){
-        return signatureWallet(_wallet, _amount, _nonce, _signature) == signer;
+        return signatureWallet(_wallet, _token, _amount, _nonce, _selector, _signature) == signer;
     }
 
     function signatureWallet(
         address _wallet,
+        address _token,
         uint256 _amount,
         uint256 _nonce,
+        bytes4 _selector,
         bytes memory _signature
     ) internal pure returns (address){
-        bytes32 hash = keccak256(abi.encode(_wallet, _amount, _nonce));
+        bytes32 hash = keccak256(abi.encode(_wallet, _token, _amount, _nonce, _selector));
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
 

@@ -31,9 +31,10 @@ contract GameERC20Factory is Ownable, Pausable {
     ) external whenNotPaused returns (uint256) {
         bytes memory _initializationCallData =
         abi.encodeWithSignature(
-            "initialize(string,string)",
+            "initialize(string,string,address)",
             _name,
-            _symbol
+            _symbol,
+            msg.sender
         );
 
         address vault = address(
