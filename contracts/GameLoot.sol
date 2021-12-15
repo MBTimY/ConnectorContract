@@ -25,6 +25,7 @@ abstract contract GameLoot is ERC721, IGameLoot {
 
     event CreateAttribute(uint128 attrID, uint8 decimal);
     event CreateAttributeBatch(uint128[] attrIDs, uint8[] decimals);
+    event AttributeChanged(uint256 tokenID);
 
     constructor(string memory name_, string memory symbol_, uint256 cap_) ERC721(name_, symbol_) {
         _cap = cap_;
@@ -63,6 +64,7 @@ abstract contract GameLoot is ERC721, IGameLoot {
         require(_attrBaseData[attrID].exist, "GameLoot: attribute is not existed");
         require(_attrData[tokenID].length + 1 <= _cap, "GameLoot: too many attributes");
         _attrData[tokenID].push(AttributeData(attrID, value));
+        emit AttributeChanged(tokenID);
     }
 
     function _attachBatch(uint256 tokenID, uint128[] memory attrIDs, uint128[] memory values) internal virtual {
@@ -71,21 +73,25 @@ abstract contract GameLoot is ERC721, IGameLoot {
             require(_attrBaseData[attrIDs[i]].exist, "GameLoot: attribute is not existed");
             _attrData[tokenID].push(AttributeData(attrIDs[i], values[i]));
         }
+        emit AttributeChanged(tokenID);
     }
 
     function _update(uint256 tokenID, uint256 attrIndex, uint128 value) internal virtual {
         _attrData[tokenID][attrIndex].attrValue = value;
+        emit AttributeChanged(tokenID);
     }
 
     function _updateBatch(uint256 tokenID, uint256[] memory attrIndexes, uint128[] memory values) internal virtual {
         for (uint256 i; i < attrIndexes.length; i++) {
             _attrData[tokenID][attrIndexes[i]].attrValue = values[i];
         }
+        emit AttributeChanged(tokenID);
     }
 
     function _remove(uint256 tokenID, uint256 attrIndex) internal virtual {
         _attrData[tokenID][attrIndex] = _attrData[tokenID][_attrData[tokenID].length - 1];
         _attrData[tokenID].pop();
+        emit AttributeChanged(tokenID);
     }
 
     function _removeBatch(uint256 tokenID, uint256[] memory attrIndexes) internal virtual {
@@ -93,6 +99,7 @@ abstract contract GameLoot is ERC721, IGameLoot {
             _attrData[tokenID][attrIndexes[i]] = _attrData[tokenID][_attrData[tokenID].length - 1];
             _attrData[tokenID].pop();
         }
+        emit AttributeChanged(tokenID);
     }
 
     function getCap() public view returns (uint256){
