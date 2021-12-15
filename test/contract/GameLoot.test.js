@@ -932,7 +932,7 @@ describe("GameLootTreasure", async function () {
         await gameLootTreasure.connect(user).topUpBatch(addresses, tokenIDs, nonce, signData);
     })
 
-    it.only('upChain should be success: ', async () => {
+    it('upChain should be success: ', async () => {
         /*
         * body gameMint
         * */
@@ -998,7 +998,7 @@ describe("GameLootTreasure", async function () {
         assert.equal(attrData.length, 12);
     })
 
-    it.only('upChainBatch should be success: ', async () => {
+    it('upChainBatch should be success: ', async () => {
         /*
        * body gameMint
        * */
