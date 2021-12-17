@@ -22,8 +22,10 @@ contract GameLootEquipment is GameLoot, Ownable {
     uint128 public prePer;
     bool public publicStart;
     bool public presaleStart;
-    mapping(address => bool) hasMinted;
-    mapping(address => bool) hasPresale;
+    mapping(address => bool) public hasMinted;
+    mapping(address => bool) public hasPresale;
+
+    event GameMint(address user, uint256 nonce);
 
     constructor(
         string memory name_,
@@ -71,7 +73,7 @@ contract GameLootEquipment is GameLoot, Ownable {
         require(presaleAmount < maxPresale, "presale out");
         require(!usedNonce[nonce_], "nonce is used");
         require(verify(msg.sender, address(this), nonce_, signature_), "sign is not correct");
-        if(presaleAmount + amount_ > maxPresale)
+        if (presaleAmount + amount_ > maxPresale)
             amount_ = uint128(maxPresale - presaleAmount);
 
         usedNonce[nonce_] = true;
@@ -105,36 +107,35 @@ contract GameLootEquipment is GameLoot, Ownable {
     /// @notice Mint from game
     /// @dev Need to sign
     function gameMint(
-        uint256 tokenID_,
         uint256 nonce_,
         uint128[] memory attrIDs_,
         uint128[] memory attrValues_,
         bytes memory signature_
     ) public {
         require(!usedNonce[nonce_], "nonce is used");
-        require(verify(msg.sender, address(this), tokenID_, nonce_, attrIDs_, attrValues_, signature_), "sign is not correct");
+        require(verify(msg.sender, address(this), nonce_, attrIDs_, attrValues_, signature_), "sign is not correct");
         require(attrIDs_.length == attrValues_.length, "param length error");
         usedNonce[nonce_] = true;
 
-        _attachBatch(tokenID_, attrIDs_, attrValues_);
+        _attachBatch(totalSupply, attrIDs_, attrValues_);
 
-        _safeMint(msg.sender, tokenID_);
+        _safeMint(msg.sender, totalSupply);
+        emit GameMint(msg.sender, nonce_);
     }
 
     /// @notice Mint from suit contract
     /// @dev Need to sign
     function suitMint(
         address _addr,
-        uint256 tokenID_,
         uint128[] memory attrIDs_,
         uint128[] memory attrValues_
     ) public {
         require(msg.sender == suit, "suit only");
         require(attrIDs_.length == attrValues_.length, "param length error");
 
-        _attachBatch(tokenID_, attrIDs_, attrValues_);
+        _attachBatch(totalSupply, attrIDs_, attrValues_);
 
-        _safeMint(_addr, tokenID_);
+        _safeMint(_addr, totalSupply);
     }
 
     function verify(
@@ -155,6 +156,32 @@ contract GameLootEquipment is GameLoot, Ownable {
         bytes32 hash = keccak256(
             abi.encode(wallet_, contract_, nonce_)
         );
+        return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signature_);
+    }
+
+    function verify(
+        address wallet_,
+        address contract_,
+        uint256 nonce_,
+        uint128[] memory attrIDs_,
+        uint128[] memory attrValues_,
+        bytes memory signature_
+    ) internal view returns (bool){
+        return signatureWallet(wallet_, contract_, nonce_, attrIDs_, attrValues_, signature_) == signer;
+    }
+
+    function signatureWallet(
+        address wallet_,
+        address contract_,
+        uint256 nonce_,
+        uint128[] memory attrIDs_,
+        uint128[] memory attrValues_,
+        bytes memory signature_
+    ) internal pure returns (address){
+        bytes32 hash = keccak256(
+            abi.encode(wallet_, contract_, nonce_, attrIDs_, attrValues_)
+        );
+
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signature_);
     }
 
@@ -184,6 +211,10 @@ contract GameLootEquipment is GameLoot, Ownable {
         );
 
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signature_);
+    }
+
+    function exists(uint256 tokenId) public {
+        _exists(tokenId);
     }
 
     function openPresale() public onlyOwner {

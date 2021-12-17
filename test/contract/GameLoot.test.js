@@ -144,7 +144,6 @@ describe("GameLootEquipment", async function () {
 
     it('gameMint should revert: ', async () => {
         await body.setMaxSupply(100);
-        const tokenID = 1;
         const nonce = 1;
         const attrIDs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         const attrValues = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
@@ -156,8 +155,8 @@ describe("GameLootEquipment", async function () {
 
         //  generate hash
         const originalData = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "uint256[]", "uint256[]"],
-            [user.address, body.address, tokenID, nonce, attrIDs, attrValues]
+            ["address", "address", "uint256", "uint256[]", "uint256[]"],
+            [user.address, body.address, nonce, attrIDs, attrValues]
         );
         const hash = hre.ethers.utils.keccak256(originalData);
         //  user signed not signer signed
@@ -165,34 +164,33 @@ describe("GameLootEquipment", async function () {
         const signDataRight = await signer.signMessage(web3Utils.hexToBytes(hash));
 
         await assert.revert(
-            body.connect(user).gameMint(tokenID, nonce, attrIDs, attrValues, signDataError),
+            body.connect(user).gameMint(nonce, attrIDs, attrValues, signDataError),
             "sign is not correct"
         );
 
         //  test nonce
-        await body.connect(user).gameMint(tokenID, nonce, attrIDs, attrValues, signDataRight);
+        await body.connect(user).gameMint(nonce, attrIDs, attrValues, signDataRight);
         await assert.revert(
-            body.connect(user).gameMint(tokenID, nonce, attrIDs, attrValues, signDataRight),
+            body.connect(user).gameMint(nonce, attrIDs, attrValues, signDataRight),
             "nonce is used"
         );
 
         //  param length
         const nonce_ = 0;
         const originalDataError = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "uint256[]", "uint256[]"],
-            [user.address, body.address, tokenID, nonce_, attrIDs, attrValuesError]
+            ["address", "address", "uint256", "uint256[]", "uint256[]"],
+            [user.address, body.address, nonce_, attrIDs, attrValuesError]
         );
         const hashError = hre.ethers.utils.keccak256(originalDataError);
         const signDataError_ = await signer.signMessage(web3Utils.hexToBytes(hashError));
         await assert.revert(
-            body.connect(user).gameMint(tokenID, nonce_, attrIDs, attrValuesError, signDataError_),
+            body.connect(user).gameMint(nonce_, attrIDs, attrValuesError, signDataError_),
             "param length error"
         );
     })
 
     it('gameMint should be success: ', async () => {
         await body.setMaxSupply(100);
-        const tokenID = 0;
         const nonce = 0;
         const attrIDs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         const decimals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -200,15 +198,15 @@ describe("GameLootEquipment", async function () {
 
         //  generate hash
         const originalData = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "uint256[]", "uint256[]"],
-            [user.address, body.address, tokenID, nonce, attrIDs, attrValues]
+            ["address", "address", "uint256", "uint256[]", "uint256[]"],
+            [user.address, body.address, nonce, attrIDs, attrValues]
         );
         const hash = hre.ethers.utils.keccak256(originalData);
         const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
 
         assert.equal(await body.getSigner(), signer.address);
         await body.createBatch(attrIDs, decimals);
-        await body.connect(user).gameMint(tokenID, nonce, attrIDs, attrValues, signData);
+        await body.connect(user).gameMint(nonce, attrIDs, attrValues, signData);
     })
 
     it('mint should be revert: ', async () => {
@@ -463,7 +461,6 @@ describe("GameLootEquipment", async function () {
 
     it('tokenURI should be success: ', async () => {
         await body.setMaxSupply(100);
-        const tokenID = 0;
         const nonce = 0;
         const attrIDs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
         const decimals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -471,15 +468,15 @@ describe("GameLootEquipment", async function () {
 
         //  generate hash
         const originalData = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "uint256[]", "uint256[]"],
-            [user.address, body.address, tokenID, nonce, attrIDs, attrValues]
+            ["address", "address", "uint256", "uint256[]", "uint256[]"],
+            [user.address, body.address, nonce, attrIDs, attrValues]
         );
         const hash = hre.ethers.utils.keccak256(originalData);
         const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
 
         assert.equal(await body.getSigner(), signer.address);
         await body.createBatch(attrIDs, decimals);
-        await body.connect(user).gameMint(tokenID, nonce, attrIDs, attrValues, signData);
+        await body.connect(user).gameMint(nonce, attrIDs, attrValues, signData);
 
         const output = await body.tokenURI(0);
         const strArr = output.split('data:application/json;base64,')
@@ -487,6 +484,7 @@ describe("GameLootEquipment", async function () {
         const imgBase64 = JSON.parse(json).image.split("data:image/svg+xml;base64,")[1]
 
         const img = Buffer.from(imgBase64, "base64").toString('ascii')
+        // console.log(img);
     })
 })
 
@@ -672,7 +670,7 @@ describe("GameLootSuit", async function () {
 
         const decimals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         const tokenID = 0;
-        const equipIDs = [0, 0, 0, 0, 0];
+        const equipIDs = [0, 1, 2, 3, 4];
         const attrIDs_ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         const attrIDs = [attrIDs_, attrIDs_, attrIDs_, attrIDs_, attrIDs_];
         const values_ = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
@@ -701,7 +699,7 @@ describe("GameLootSuit", async function () {
         const equipIDsError = [0, 0, 0, 0, 0, 0];
         await assert.revert(
             gameLootSuit.connect(user).divide(tokenID, equipIDsError, attrIDs, values, nonce, signData),
-            "equips length error"
+            "params length error"
         );
 
         const attrIDsError = [attrIDs_, attrIDs_, attrIDs_, attrIDs_, attrIDs_, attrIDs_];
@@ -740,7 +738,7 @@ describe("GameLootSuit", async function () {
 
         const decimals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         const tokenID = 0;
-        const equipIDs = [0, 0, 0, 0, 0];
+        const equipIDs = [0, 1, 2, 3, 4];
         const attrIDs_ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         const attrIDs = [attrIDs_, attrIDs_, attrIDs_, attrIDs_, attrIDs_];
         const values_ = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
@@ -788,7 +786,7 @@ describe("GameLootSuit", async function () {
 
 describe("GameLootTreasure", async function () {
     let gameLootTreasure;
-    let body,leg;
+    let body, leg;
     let gameLootSuit;
 
     let owner, user, signer, vault, user1;
@@ -930,7 +928,6 @@ describe("GameLootTreasure", async function () {
         * body gameMint
         * */
         await body.setMaxSupply(100);
-        const tokenID = 5;
         const nonce = 0;
         const attrIDs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         const decimals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -938,20 +935,21 @@ describe("GameLootTreasure", async function () {
 
         //  generate hash
         const originalData = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "uint256[]", "uint256[]"],
-            [user.address, body.address, tokenID, nonce, attrIDs, attrValues]
+            ["address", "address", "uint256", "uint256[]", "uint256[]"],
+            [user.address, body.address, nonce, attrIDs, attrValues]
         );
         const hash = hre.ethers.utils.keccak256(originalData);
         const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
 
         assert.equal(await body.getSigner(), signer.address);
         await body.createBatch(attrIDs, decimals);
-        await body.connect(user).gameMint(tokenID, nonce, attrIDs, attrValues, signData);
+        await body.connect(user).gameMint(nonce, attrIDs, attrValues, signData);
 
         /*
         * body topUp
         * */
         const _nonce = 0;
+        const tokenID = 5;
 
         //  generate hash
         const _originalData = hre.ethers.utils.defaultAbiCoder.encode(
@@ -970,21 +968,21 @@ describe("GameLootTreasure", async function () {
         const nonce_ = 1;
         const attrIDs_ = [10, 11, 12];
         const attrValues_ = [20, 20, 20];
-        const attrIDsUpdate_ = [3, 4, 5];
+        const attrIndexesUpdate_ = [3, 4, 5];
         const attrValuesUpdate_ = [20, 20, 20];
         const attrIndexesRM_ = [9];
 
         //  generate hash
         const originalData_ = hre.ethers.utils.defaultAbiCoder.encode(
             ["address", "address", "uint256", "uint256", "uint256[]", "uint256[]", "uint256[]", "uint256[]", "uint256[]"],
-            [user.address, body.address, tokenID, nonce_, attrIDs_, attrValues_, attrIDsUpdate_, attrValuesUpdate_, attrIndexesRM_]
+            [user.address, body.address, tokenID, nonce_, attrIDs_, attrValues_, attrIndexesUpdate_, attrValuesUpdate_, attrIndexesRM_]
         );
         const hash_ = hre.ethers.utils.keccak256(originalData_);
         const signData_ = await signer.signMessage(web3Utils.hexToBytes(hash_));
 
         await body.createBatch(attrIDs_, [0, 0, 0]);
 
-        await gameLootTreasure.connect(user).upChain(body.address, tokenID, nonce_, attrIDs_, attrValues_, attrIDsUpdate_, attrValuesUpdate_, attrIndexesRM_, signData_);
+        await gameLootTreasure.connect(user).upChain(body.address, tokenID, nonce_, attrIDs_, attrValues_, attrIndexesUpdate_, attrValuesUpdate_, attrIndexesRM_, signData_);
 
         const attrData = await body.attributes(tokenID);
 
@@ -996,7 +994,6 @@ describe("GameLootTreasure", async function () {
        * body gameMint
        * */
         await body.setMaxSupply(100);
-        const tokenID = 5;
         const nonce = 0;
         const attrIDs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         const decimals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -1004,21 +1001,22 @@ describe("GameLootTreasure", async function () {
 
         //  generate hash
         const originalData = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "uint256[]", "uint256[]"],
-            [user.address, body.address, tokenID, nonce, attrIDs, attrValues]
+            ["address", "address", "uint256", "uint256[]", "uint256[]"],
+            [user.address, body.address, nonce, attrIDs, attrValues]
         );
         const hash = hre.ethers.utils.keccak256(originalData);
         const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
 
         assert.equal(await body.getSigner(), signer.address);
         await body.createBatch(attrIDs, decimals);
-        await body.connect(user).gameMint(tokenID, nonce, attrIDs, attrValues, signData);
+        await body.connect(user).gameMint(nonce, attrIDs, attrValues, signData);
 
 
         /*
         * topUp
         * */
         const _nonce = 0;
+        const tokenID = 5;
 
         //  generate hash
         const _originalData = hre.ethers.utils.defaultAbiCoder.encode(
@@ -1036,7 +1034,7 @@ describe("GameLootTreasure", async function () {
         * leg gameMint
         * */
         await leg.setMaxSupply(100);
-        const tokenIDleg = 5;
+        const tokenIDleg = 0;
         const nonceleg = 0;
         const attrIDsleg = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         const decimalsleg = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -1044,15 +1042,15 @@ describe("GameLootTreasure", async function () {
 
         //  generate hash
         const originalDataleg = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "uint256[]", "uint256[]"],
-            [user.address, leg.address, tokenIDleg, nonceleg, attrIDsleg, attrValuesleg]
+            ["address", "address", "uint256", "uint256[]", "uint256[]"],
+            [user.address, leg.address, nonceleg, attrIDsleg, attrValuesleg]
         );
         const hashleg = hre.ethers.utils.keccak256(originalDataleg);
         const signDataleg = await signer.signMessage(web3Utils.hexToBytes(hashleg));
 
         assert.equal(await leg.getSigner(), signer.address);
         await leg.createBatch(attrIDsleg, decimalsleg);
-        await leg.connect(user).gameMint(tokenIDleg, nonceleg, attrIDsleg, attrValuesleg, signDataleg);
+        await leg.connect(user).gameMint(nonceleg, attrIDsleg, attrValuesleg, signDataleg);
 
         /*
         * leg topUp
@@ -1083,7 +1081,7 @@ describe("GameLootTreasure", async function () {
         //  generate hash
         const originalData_ = hre.ethers.utils.defaultAbiCoder.encode(
             ["address", "address[]", "uint256[]", "uint256", "uint128[][]", "uint128[][]", "uint256[][]", "uint128[][]", "uint256[][]"],
-            [user.address, [body.address,leg.address], [tokenID,tokenIDleg], nonce_, [attrIDs_,attrIDs_], [attrValues_,attrValues_], [attrIDsUpdate_,attrIDsUpdate_], [attrValuesUpdate_,attrValuesUpdate_], [attrIndexesRM_,attrIndexesRM_]]
+            [user.address, [body.address, leg.address], [tokenID, tokenIDleg], nonce_, [attrIDs_, attrIDs_], [attrValues_, attrValues_], [attrIDsUpdate_, attrIDsUpdate_], [attrValuesUpdate_, attrValuesUpdate_], [attrIndexesRM_, attrIndexesRM_]]
         );
         const hash_ = hre.ethers.utils.keccak256(originalData_);
         const signData_ = await signer.signMessage(web3Utils.hexToBytes(hash_));
@@ -1091,7 +1089,7 @@ describe("GameLootTreasure", async function () {
         await body.createBatch(attrIDs_, [0, 0, 0]);
         await leg.createBatch(attrIDs_, [0, 0, 0]);
 
-        await gameLootTreasure.connect(user).upChainBatch([body.address,leg.address], [tokenID,tokenIDleg], nonce_, [attrIDs_,attrIDs_], [attrValues_,attrValues_], [attrIDsUpdate_,attrIDsUpdate_], [attrValuesUpdate_,attrValuesUpdate_], [attrIndexesRM_,attrIndexesRM_], signData_);
+        await gameLootTreasure.connect(user).upChainBatch([body.address, leg.address], [tokenID, tokenIDleg], nonce_, [attrIDs_, attrIDs_], [attrValues_, attrValues_], [attrIDsUpdate_, attrIDsUpdate_], [attrValuesUpdate_, attrValuesUpdate_], [attrIndexesRM_, attrIndexesRM_], signData_);
 
         const attrData = await body.attributes(tokenID);
 

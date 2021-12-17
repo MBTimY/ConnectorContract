@@ -109,18 +109,25 @@ abstract contract GameLoot is ERC721, IGameLoot {
     function tokenURI(uint256 tokenID) override public view returns (string memory) {
         AttributeData[] memory attrData = _attrData[tokenID];
 
-        string memory output = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>.base { fill: white; font-family: serif; font-size: 14px; }</style><rect width="100%" height="100%" fill="black" /><text x="10" y="20" class="base">';
+        string memory output = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>.base { fill: white; font-family: serif; font-size: 14px; }</style><rect width="100%" height="100%" fill="black" /><text x="10" y="20" class="base">ID</text><text x="80" y="20" class="base">Value</text><text x="185" y="20" class="base">ID</text><text x="255" y="20" class="base">Value';
 
         string memory p1 = '</text><text x="10" y="';
-        string memory p2 = '</text><text x="100" y="';
-        string memory p3 = '" class="base">';
+        string memory p2 = '</text><text x="80" y="';
+        string memory p3 = '</text><text x="185" y="';
+        string memory p4 = '</text><text x="255" y="';
+        string memory p5 = '" class="base">';
 
         bytes memory tb;
         for (uint256 i; i < _attrData[tokenID].length; i++) {
-            if (i == 0)
-                tb = abi.encodePacked(tb, toString(attrData[i].attrID), p2, '20', p3, toString(attrData[i].attrValue));
-            else
-                tb = abi.encodePacked(tb, p1, toString(20 + 20 * i), p3,  toString(attrData[i].attrID), p2, toString(20 + 20 * i), p3, toString(attrData[i].attrValue));
+            uint128 id = attrData[i].attrID;
+            uint128 value = attrData[i].attrValue;
+            if (i % 2 == 0){
+                string memory y = toString(40 + 20 * i / 2);
+                tb = abi.encodePacked(tb, p1, y, p5,  toString(id), p2, y, p5, toString(value));
+            } else{
+                string memory y = toString(40 + 20 * (i - 1) / 2);
+                tb = abi.encodePacked(tb, p3, y, p5,  toString(id), p4, y, p5, toString(value));
+            }
         }
         tb = abi.encodePacked(tb, '</text></svg>');
 

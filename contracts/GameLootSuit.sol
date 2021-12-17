@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 interface IEquipment {
     function suitMint(
         address _addr,
-        uint256 _tokenID,
         uint128[] memory _attrIDs,
         uint128[] memory _attrValues
     ) external;
@@ -85,7 +84,7 @@ contract GameLootSuit is ERC721, Ownable {
     /// @dev Need to sign
     function divide(
         uint256 _tokenID,
-        uint256[] memory _equipIDs,
+        uint256[] memory _equipIndexes,
         uint128[][] memory _attrIDs,
         uint128[][] memory _values,
         uint256 _nonce,
@@ -93,42 +92,41 @@ contract GameLootSuit is ERC721, Ownable {
     ) public {
         require(ownerOf(_tokenID) == msg.sender, "owner missed");
         require(!usedNonce[_nonce], "nonce is used");
-        require(_equipIDs.length == equipments.length, "equips length error");
-        require(_attrIDs.length == _values.length && equipments.length == _attrIDs.length, "params length error");
-        require(verify(_tokenID, address(this), _equipIDs, _attrIDs, _values, _nonce, _signature), "sign is not correct");
+        require(_attrIDs.length == _values.length && _equipIndexes.length == _attrIDs.length, "params length error");
+        require(verify(_tokenID, address(this), _equipIndexes, _attrIDs, _values, _nonce, _signature), "sign is not correct");
 
         usedNonce[_nonce] = true;
 
         _burn(_tokenID);
 
-        for (uint256 i; i < equipments.length; i++) {
-            IEquipment(equipments[i]).suitMint(msg.sender, _equipIDs[i], _attrIDs[i], _values[i]);
+        for (uint256 i; i < _equipIndexes.length; i++) {
+            IEquipment(equipments[_equipIndexes[i]]).suitMint(msg.sender, _attrIDs[i], _values[i]);
         }
     }
 
     function verify(
         uint256 _tokenID,
         address _token,
-        uint256[] memory _equipIDs,
+        uint256[] memory _equipTokenIDs,
         uint128[][] memory _attrIDs,
         uint128[][] memory _values,
         uint256 _nonce,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWallet(_tokenID, _token, _equipIDs, _attrIDs, _values, _nonce, _signature) == signer;
+        return signatureWallet(_tokenID, _token, _equipTokenIDs, _attrIDs, _values, _nonce, _signature) == signer;
     }
 
     function signatureWallet(
         uint256 _tokenID,
         address _token,
-        uint256[] memory _equipIDs,
+        uint256[] memory _equipTokenIDs,
         uint128[][] memory _attrIDs,
         uint128[][] memory _values,
         uint256 _nonce,
         bytes memory _signature
     ) internal pure returns (address){
         bytes32 hash = keccak256(
-            abi.encode(_tokenID, _token, _equipIDs, _attrIDs, _values, _nonce)
+            abi.encode(_tokenID, _token, _equipTokenIDs, _attrIDs, _values, _nonce)
         );
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
