@@ -7,11 +7,11 @@ import "./GameLoot.sol";
 import "hardhat/console.sol";
 
 contract GameLootEquipment is GameLoot, Ownable {
-    address private signer;
+    address public signer;
     address public treasure;
     address public suit;
     address public vault;
-    mapping(uint256 => bool) private usedNonce;
+    mapping(uint256 => bool) public usedNonce;
 
     uint256 public totalSupply;
     uint128 public maxPresale;
@@ -213,7 +213,7 @@ contract GameLootEquipment is GameLoot, Ownable {
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signature_);
     }
 
-    function exists(uint256 tokenId) public {
+    function exists(uint256 tokenId) public view{
         _exists(tokenId);
     }
 
@@ -255,10 +255,6 @@ contract GameLootEquipment is GameLoot, Ownable {
 
     function setCap(uint256 cap) public onlyOwner {
         _cap = cap;
-    }
-
-    function getSigner() public view onlyOwner returns (address){
-        return signer;
     }
 
     function create(uint128 attrID_, uint8 decimals_) override public onlyOwner {

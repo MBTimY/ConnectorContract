@@ -10,7 +10,7 @@ import "./IGameLoot.sol";
 
 contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
     address private signer;
-    mapping(uint256 => bool) private usedNonce;
+    mapping(uint256 => bool) public usedNonce;
 
     constructor(address _signer){
         signer = _signer;
