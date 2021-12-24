@@ -25,7 +25,7 @@ contract GameLootEquipment is GameLoot, Ownable {
     mapping(address => bool) public hasMinted;
     mapping(address => bool) public hasPresale;
 
-    event GameMint(address user, uint256 nonce);
+    event GameMint(address user, uint256 tokenID, uint256 nonce);
 
     constructor(
         string memory name_,
@@ -120,7 +120,7 @@ contract GameLootEquipment is GameLoot, Ownable {
         _attachBatch(totalSupply, attrIDs_, attrValues_);
 
         _safeMint(msg.sender, totalSupply);
-        emit GameMint(msg.sender, nonce_);
+        emit GameMint(msg.sender, totalSupply, nonce_);
     }
 
     /// @notice Mint from suit contract
@@ -213,7 +213,7 @@ contract GameLootEquipment is GameLoot, Ownable {
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signature_);
     }
 
-    function exists(uint256 tokenId) public view{
+    function exists(uint256 tokenId) public view {
         _exists(tokenId);
     }
 
