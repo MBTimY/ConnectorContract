@@ -7,11 +7,11 @@ import "./GameLoot.sol";
 import "hardhat/console.sol";
 
 contract GameLootEquipment is GameLoot, Ownable {
-    address private signer;
+    address public signer;
     address public treasure;
     address public suit;
     address public vault;
-    mapping(uint256 => bool) private usedNonce;
+    mapping(uint256 => bool) public usedNonce;
 
     uint256 public totalSupply;
     uint128 public maxPresale;
@@ -25,7 +25,7 @@ contract GameLootEquipment is GameLoot, Ownable {
     mapping(address => bool) public hasMinted;
     mapping(address => bool) public hasPresale;
 
-    event GameMint(address user, uint256 nonce);
+    event GameMint(address user, uint256 tokenID, uint256 nonce);
 
     constructor(
         string memory name_,
@@ -120,7 +120,7 @@ contract GameLootEquipment is GameLoot, Ownable {
         _attachBatch(totalSupply, attrIDs_, attrValues_);
 
         _safeMint(msg.sender, totalSupply);
-        emit GameMint(msg.sender, nonce_);
+        emit GameMint(msg.sender, totalSupply, nonce_);
     }
 
     /// @notice Mint from suit contract
@@ -213,7 +213,7 @@ contract GameLootEquipment is GameLoot, Ownable {
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signature_);
     }
 
-    function exists(uint256 tokenId) public {
+    function exists(uint256 tokenId) public view {
         _exists(tokenId);
     }
 
@@ -257,10 +257,6 @@ contract GameLootEquipment is GameLoot, Ownable {
         _cap = cap;
     }
 
-    function getSigner() public view onlyOwner returns (address){
-        return signer;
-    }
-
     function create(uint128 attrID_, uint8 decimals_) override public onlyOwner {
         super.create(attrID_, decimals_);
     }
@@ -277,20 +273,20 @@ contract GameLootEquipment is GameLoot, Ownable {
         _attachBatch(tokenID_, attrIDs_, _values);
     }
 
-    function remove(uint256 tokenID_, uint256 attrID_) override public onlyTreasure {
-        _remove(tokenID_, attrID_);
+    function remove(uint256 tokenID_, uint256 attrIndex_) override public onlyTreasure {
+        _remove(tokenID_, attrIndex_);
     }
 
-    function removeBatch(uint256 tokenID_, uint256[] memory attrIDs_) override public onlyTreasure {
-        _removeBatch(tokenID_, attrIDs_);
+    function removeBatch(uint256 tokenID_, uint256[] memory attrIndexes_) override public onlyTreasure {
+        _removeBatch(tokenID_, attrIndexes_);
     }
 
-    function update(uint256 tokenID, uint256 attrIndex, uint128 value) override public onlyTreasure {
-        _update(tokenID, attrIndex, value);
+    function update(uint256 tokenID_, uint256 attrIndex_, uint128 value_) override public onlyTreasure {
+        _update(tokenID_, attrIndex_, value_);
     }
 
-    function updateBatch(uint256 tokenID, uint256[] memory attrIndexes, uint128[] memory values) override public onlyTreasure {
-        _updateBatch(tokenID, attrIndexes, values);
+    function updateBatch(uint256 tokenID_, uint256[] memory attrIndexes_, uint128[] memory values_) override public onlyTreasure {
+        _updateBatch(tokenID_, attrIndexes_, values_);
     }
 
     function setSuit(address suit_) public onlyOwner {

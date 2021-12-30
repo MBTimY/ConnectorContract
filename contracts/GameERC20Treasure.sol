@@ -16,7 +16,7 @@ contract GameERC20Treasure is Ownable, Pausable {
     address public token;
 
     event UpChain(address indexed sender, uint256 amount, uint256 nonce);
-    event TopUp(address indexed sender, uint256 amount);
+    event TopUp(address indexed sender, uint256 amount, uint256 nonce);
 
     constructor(address _signer, address _token){
         signer = _signer;
@@ -46,7 +46,7 @@ contract GameERC20Treasure is Ownable, Pausable {
         _usedNonce[_nonce] = true;
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), _amount);
-        emit TopUp(msg.sender, _amount);
+        emit TopUp(msg.sender, _amount, _nonce);
     }
 
     function verify(

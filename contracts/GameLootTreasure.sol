@@ -10,11 +10,16 @@ import "./IGameLoot.sol";
 
 contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
     address private signer;
-    mapping(uint256 => bool) private usedNonce;
+    mapping(uint256 => bool) public usedNonce;
 
     constructor(address _signer){
         signer = _signer;
     }
+
+    event UpChain(address token, uint256 tokenID, uint256 nonce);
+    event TopUp(address token, uint256 tokenID, uint256 nonce);
+    event UpChainBatch(address[] tokens, uint256[] tokenIDs, uint256 nonce);
+    event TopUpBatch(address[] tokens, uint256[] tokenIDs, uint256 nonce);
 
     receive() external payable {}
 
@@ -44,6 +49,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
             IGameLoot(_token).removeBatch(_tokenID, _attrIndexesRM);
 
         IERC721(_token).transferFrom(address(this), msg.sender, _tokenID);
+        emit UpChain(_token, _tokenID, _nonce);
     }
 
     /// @notice Top up
@@ -58,6 +64,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         usedNonce[_nonce] = true;
 
         IERC721(_token).transferFrom(msg.sender, address(this), _tokenID);
+        emit TopUp(_token, _tokenID, _nonce);
     }
 
     /// @notice Multi In-game assets set on chain
@@ -88,6 +95,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
 
             IERC721(_tokens[i]).transferFrom(address(this), msg.sender, _tokenIDs[i]);
         }
+        emit UpChainBatch(_tokens, _tokenIDs, _nonce);
     }
 
     /// @notice Top up Multi NFTs
@@ -104,6 +112,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         for (uint256 i; i < _tokens.length; i++) {
             IERC721(_tokens[i]).transferFrom(msg.sender, address(this), _tokenIDs[i]);
         }
+        emit TopUpBatch(_tokens, _tokenIDs, _nonce);
     }
 
     function verify(

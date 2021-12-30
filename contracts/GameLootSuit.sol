@@ -35,7 +35,7 @@ contract GameLootSuit is ERC721, Ownable {
     mapping(address => bool) hasPresale;
 
     address private signer;
-    mapping(uint256 => bool) private usedNonce;
+    mapping(uint256 => bool) public usedNonce;
 
     constructor(
         string memory _name,
