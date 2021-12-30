@@ -273,20 +273,20 @@ contract GameLootEquipment is GameLoot, Ownable {
         _attachBatch(tokenID_, attrIDs_, _values);
     }
 
-    function remove(uint256 tokenID_, uint256 attrID_) override public onlyTreasure {
-        _remove(tokenID_, attrID_);
+    function remove(uint256 tokenID_, uint256 attrIndex_) override public onlyTreasure {
+        _remove(tokenID_, attrIndex_);
     }
 
-    function removeBatch(uint256 tokenID_, uint256[] memory attrIDs_) override public onlyTreasure {
-        _removeBatch(tokenID_, attrIDs_);
+    function removeBatch(uint256 tokenID_, uint256[] memory attrIndexes_) override public onlyTreasure {
+        _removeBatch(tokenID_, attrIndexes_);
     }
 
-    function update(uint256 tokenID, uint256 attrIndex, uint128 value) override public onlyTreasure {
-        _update(tokenID, attrIndex, value);
+    function update(uint256 tokenID_, uint256 attrIndex_, uint128 value_) override public onlyTreasure {
+        _update(tokenID_, attrIndex_, value_);
     }
 
-    function updateBatch(uint256 tokenID, uint256[] memory attrIndexes, uint128[] memory values) override public onlyTreasure {
-        _updateBatch(tokenID, attrIndexes, values);
+    function updateBatch(uint256 tokenID_, uint256[] memory attrIndexes_, uint128[] memory values_) override public onlyTreasure {
+        _updateBatch(tokenID_, attrIndexes_, values_);
     }
 
     function setSuit(address suit_) public onlyOwner {

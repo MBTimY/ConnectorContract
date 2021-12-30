@@ -29,8 +29,8 @@ abstract contract GameLoot is ERC721, IGameLoot {
     event AttributeAttachedBatch(uint256 tokenID, uint128[] attrIDs, uint128[] values);
     event AttributeUpdated(uint256 tokenID, uint256 attrIndex, uint128 value);
     event AttributeUpdatedBatch(uint256 tokenID, uint256[] attrIndexes, uint128[] values);
-    event AttributeRemoved(uint256 tokenID, uint256 attrIndex);
-    event AttributeRemoveBatch(uint256 tokenID, uint256[] attrIndexes);
+    event AttributeRemoved(uint256 tokenID, uint128 attrID);
+    event AttributeRemoveBatch(uint256 tokenID, uint128[] attrIDs);
 
     constructor(string memory name_, string memory symbol_, uint256 cap_) ERC721(name_, symbol_) {
         _cap = cap_;
@@ -94,17 +94,20 @@ abstract contract GameLoot is ERC721, IGameLoot {
     }
 
     function _remove(uint256 tokenID, uint256 attrIndex) internal virtual {
+        uint128 id = _attrData[tokenID][attrIndex].attrID;
         _attrData[tokenID][attrIndex] = _attrData[tokenID][_attrData[tokenID].length - 1];
         _attrData[tokenID].pop();
-        emit AttributeRemoved(tokenID, attrIndex);
+        emit AttributeRemoved(tokenID, id);
     }
 
     function _removeBatch(uint256 tokenID, uint256[] memory attrIndexes) internal virtual {
+        uint128[] memory ids = new uint128[](attrIndexes.length);
         for (uint256 i; i < attrIndexes.length; i++) {
+            ids[i] = _attrData[tokenID][attrIndexes[i]].attrID;
             _attrData[tokenID][attrIndexes[i]] = _attrData[tokenID][_attrData[tokenID].length - 1];
             _attrData[tokenID].pop();
         }
-        emit AttributeRemoveBatch(tokenID, attrIndexes);
+        emit AttributeRemoveBatch(tokenID, ids);
     }
 
     function getCap() public view returns (uint256){
