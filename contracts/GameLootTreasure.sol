@@ -9,11 +9,11 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./IGameLoot.sol";
 
 contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
-    address private signer;
+    address[] public signers;
     mapping(uint256 => bool) public usedNonce;
 
-    constructor(address _signer){
-        signer = _signer;
+    constructor(address[] memory _signers){
+        signers = _signers;
     }
 
     event UpChain(address token, uint256 tokenID, uint256 nonce);
@@ -36,7 +36,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256[] memory _attrIndexesRM,
         bytes memory _signature
     ) public whenNotPaused nonceNotUsed(_nonce) {
-        require(verify(msg.sender, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRM, _signature), "sign is not correct");
+        require(verify(msg.sender, address(this), _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRM, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         if (_attrIDs.length != 0)
@@ -60,7 +60,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256 _nonce,
         bytes memory _signature
     ) public whenNotPaused nonceNotUsed(_nonce) {
-        require(verify(msg.sender, _token, _tokenID, _nonce, _signature), "sign is not correct");
+        require(verify(msg.sender, address(this), _token, _tokenID, _nonce, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         IERC721(_token).transferFrom(msg.sender, address(this), _tokenID);
@@ -80,7 +80,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256[][] memory _attrIndexesRMs,
         bytes memory _signature
     ) public whenNotPaused nonceNotUsed(_nonce) {
-        require(verify(msg.sender, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs, _signature), "sign is not correct");
+        require(verify(msg.sender, address(this), _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         for (uint256 i; i < _tokens.length; i++) {
@@ -106,7 +106,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256 _nonce,
         bytes memory _signature
     ) public whenNotPaused nonceNotUsed(_nonce) {
-        require(verify(msg.sender, _tokens, _tokenIDs, _nonce, _signature), "sign is not correct");
+        require(verify(msg.sender,address(this), _tokens, _tokenIDs, _nonce, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         for (uint256 i; i < _tokens.length; i++) {
@@ -117,29 +117,32 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
 
     function verify(
         address _wallet,
+        address _this,
         address[] memory _tokens,
         uint256[] memory _tokenIDs,
         uint256 _nonce,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWallet(_wallet, _tokens, _tokenIDs, _nonce, _signature) == signer;
+        return isSigner(signatureWallet(_wallet,_this, _tokens, _tokenIDs, _nonce, _signature));
     }
 
     function signatureWallet(
         address _wallet,
+        address _this,
         address[] memory _tokens,
         uint256[] memory _tokenIDs,
         uint256 _nonce,
         bytes memory _signature
     ) internal pure returns (address){
         bytes32 hash = keccak256(
-            abi.encode(_wallet, _tokens, _tokenIDs, _nonce)
+            abi.encode(_wallet,_this, _tokens, _tokenIDs, _nonce)
         );
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
 
     function verify(
         address _wallet,
+        address _this,
         address[] memory _tokens,
         uint256[] memory _tokenIDs,
         uint256 _nonce,
@@ -150,11 +153,12 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256[][] memory _attrIndexesRMs,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWallet(_wallet, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs, _signature) == signer;
+        return isSigner(signatureWallet(_wallet, _this, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs, _signature));
     }
 
     function signatureWallet(
         address _wallet,
+        address _this,
         address[] memory _tokens,
         uint256[] memory _tokenIDs,
         uint256 _nonce,
@@ -166,13 +170,14 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         bytes memory _signature
     ) internal pure returns (address){
         bytes32 hash = keccak256(
-            abi.encode(_wallet, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs)
+            abi.encode(_wallet, _this, _tokens, _tokenIDs, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs)
         );
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
 
     function verify(
         address _wallet,
+        address _this,
         address _token,
         uint256 _tokenID,
         uint256 _nonce,
@@ -183,11 +188,12 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         uint256[] memory _attrIndexesRMs,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWallet(_wallet, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs, _signature) == signer;
+        return isSigner(signatureWallet(_wallet, _this, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs, _signature));
     }
 
     function signatureWallet(
         address _wallet,
+        address _this,
         address _token,
         uint256 _tokenID,
         uint256 _nonce,
@@ -199,30 +205,32 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         bytes memory _signature
     ) internal pure returns (address){
         bytes32 hash = keccak256(
-            abi.encode(_wallet, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs)
+            abi.encode(_wallet, _this, _token, _tokenID, _nonce, _attrIDs, _attrValues, _attrIndexesUpdate, _attrValuesUpdate, _attrIndexesRMs)
         );
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
 
     function verify(
         address _wallet,
+        address _this,
         address _token,
         uint256 _tokenID,
         uint256 _nonce,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWallet(_wallet, _token, _tokenID, _nonce, _signature) == signer;
+        return isSigner(signatureWallet(_wallet, _this, _token, _tokenID, _nonce, _signature));
     }
 
     function signatureWallet(
         address _wallet,
+        address _this,
         address _token,
         uint256 _tokenID,
         uint256 _nonce,
         bytes memory _signature
     ) internal pure returns (address){
         bytes32 hash = keccak256(
-            abi.encode(_wallet, _token, _tokenID, _nonce)
+            abi.encode(_wallet, _this, _token, _tokenID, _nonce)
         );
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
@@ -235,20 +243,26 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         _unpause();
     }
 
-    function setSigner(address _signer) public onlyOwner {
-        signer = _signer;
+    function addSigner(address _signer) public onlyOwner {
+        signers.push(_signer);
     }
 
-    function getSigner() public view onlyOwner returns (address){
-        return signer;
-    }
-
-    function isUsed(uint256 _nonce) public view onlyOwner returns (bool){
-        return usedNonce[_nonce];
+    function removeSigner(uint256 _index) public onlyOwner {
+        signers[_index] = signers[signers.length - 1];
+        signers.pop();
     }
 
     function unLockEther() public onlyOwner {
         payable(owner()).transfer(address(this).balance);
+    }
+
+    function isSigner(address s) internal view returns (bool){
+        for (uint256 i; i < signers.length; i++) {
+            if (s == signers[i]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function onERC721Received(

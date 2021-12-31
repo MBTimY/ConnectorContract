@@ -34,7 +34,7 @@ contract GameLootSuit is ERC721, Ownable {
     mapping(address => bool) hasMinted;
     mapping(address => bool) hasPresale;
 
-    address private signer;
+    address public signer;
     mapping(uint256 => bool) public usedNonce;
 
     constructor(
@@ -182,10 +182,6 @@ contract GameLootSuit is ERC721, Ownable {
 
     function closePublicSale() public onlyOwner {
         publicStart = false;
-    }
-
-    function getSigner() public view onlyOwner returns (address){
-        return signer;
     }
 
     function withdraw() public onlyOwner {
