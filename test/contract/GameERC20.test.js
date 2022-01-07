@@ -35,12 +35,12 @@ describe("GameERC20", async function () {
 
         //  treasure
         const GameERC20Treasure = await hre.ethers.getContractFactory("GameERC20Treasure");
-        treasure = await GameERC20Treasure.deploy(signer.address, tokenAddress);
+        treasure = await GameERC20Treasure.deploy([signer.address], tokenAddress);
         await treasure.deployed();
     });
 
     it('constructor should be success: ', async () => {
-        assert.equal(await treasure.getSigner({from: owner.address}), signer.address);
+        assert.equal(await treasure.signers(0), signer.address);
         assert.equal(await treasure.token(), token.address);
 
         assert.equal(await token.owner(), owner.address);
@@ -67,8 +67,8 @@ describe("GameERC20", async function () {
 
         //  generate hash
         const originalData = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "bytes4"],
-            [user.address, token.address, amount, nonce, web3Utils.hexToBytes(topUpSelector)]
+            ["address", "address", "address", "uint256", "uint256", "bytes4"],
+            [user.address, treasure.address, token.address, amount, nonce, web3Utils.hexToBytes(topUpSelector)]
         );
         const hash = hre.ethers.utils.keccak256(originalData);
         const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
@@ -100,8 +100,8 @@ describe("GameERC20", async function () {
 
         //  generate hash
         const originalData = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "bytes4"],
-            [user.address, token.address, amount, nonce, web3Utils.hexToBytes(topUpSelector)]
+            ["address", "address", "address", "uint256", "uint256", "bytes4"],
+            [user.address, treasure.address, token.address, amount, nonce, web3Utils.hexToBytes(topUpSelector)]
         );
         const hash = hre.ethers.utils.keccak256(originalData);
         const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
@@ -120,8 +120,8 @@ describe("GameERC20", async function () {
 
         //  generate hash
         const originalData = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "bytes4"],
-            [user.address, token.address, amount, nonce, web3Utils.hexToBytes(topUpSelector)]
+            ["address", "address", "address", "uint256", "uint256", "bytes4"],
+            [user.address, treasure.address, token.address, amount, nonce, web3Utils.hexToBytes(topUpSelector)]
         );
         const hash = hre.ethers.utils.keccak256(originalData);
         const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
@@ -162,15 +162,15 @@ describe("GameERC20", async function () {
 
         //  generate hash
         const originalData = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "bytes4"],
-            [user.address, token.address, amount, nonce, web3Utils.hexToBytes(topUpSelector)]
+            ["address", "address", "address", "uint256", "uint256", "bytes4"],
+            [user.address, treasure.address, token.address, amount, nonce, web3Utils.hexToBytes(topUpSelector)]
         );
         const hash = hre.ethers.utils.keccak256(originalData);
         const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
 
         await token.connect(user).approve(treasure.address, toWei('100000000000000000000', 'ether'));
         await treasure.connect(user).topUp(amount, nonce, signData);
-        assert.equal(await token.balanceOf(treasure.address),amount);
+        assert.equal(await token.balanceOf(treasure.address), amount);
 
         /*
         * upChain
@@ -178,8 +178,8 @@ describe("GameERC20", async function () {
         nonce = 1;
         //  generate hash
         const originalDataUpChain = hre.ethers.utils.defaultAbiCoder.encode(
-            ["address", "address", "uint256", "uint256", "bytes4"],
-            [user.address, token.address, amount, nonce, web3Utils.hexToBytes(upChainSelector)]
+            ["address", "address", "address", "uint256", "uint256", "bytes4"],
+            [user.address, treasure.address, token.address, amount, nonce, web3Utils.hexToBytes(upChainSelector)]
         );
         const hashUpChain = hre.ethers.utils.keccak256(originalDataUpChain);
         const signDataUpChain = await signer.signMessage(web3Utils.hexToBytes(hashUpChain));
