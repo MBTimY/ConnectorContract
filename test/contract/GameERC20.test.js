@@ -40,7 +40,7 @@ describe("GameERC20", async function () {
     });
 
     it('constructor should be success: ', async () => {
-        assert.equal(await treasure.signers(0), signer.address);
+        assert.equal(await treasure.signers(signer.address), true);
         assert.equal(await treasure.token(), token.address);
 
         assert.equal(await token.owner(), owner.address);

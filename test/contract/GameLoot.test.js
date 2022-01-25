@@ -25,19 +25,19 @@ describe("GameLootEquipment", async function () {
         const GameLootEquipment = await hre.ethers.getContractFactory("GameLootEquipment");
         const cap = 20;
 
-        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address, signer.address, cap);
+        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address, [signer.address], cap);
         await body.deployed();
 
-        head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", gameLootTreasure.address, vault.address, signer.address, cap);
+        head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", gameLootTreasure.address, vault.address, [signer.address], cap);
         await head.deployed();
 
-        hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", gameLootTreasure.address, vault.address, signer.address, cap);
+        hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", gameLootTreasure.address, vault.address, [signer.address], cap);
         await hand.deployed();
 
-        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, vault.address, signer.address, cap);
+        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, vault.address, [signer.address], cap);
         await leg.deployed();
 
-        accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", gameLootTreasure.address, vault.address, signer.address, cap);
+        accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", gameLootTreasure.address, vault.address, [signer.address], cap);
         await accessory.deployed();
 
         const GameLootSuit = await hre.ethers.getContractFactory("GameLootSuit");
@@ -47,7 +47,7 @@ describe("GameLootEquipment", async function () {
             hand.address,
             leg.address,
             accessory.address,
-        ], toWei('0.01', 'ether'), vault.address, signer.address);
+        ], toWei('0.01', 'ether'), vault.address, [signer.address]);
         await gameLootSuit.deployed();
 
         //  set suit address
@@ -62,27 +62,27 @@ describe("GameLootEquipment", async function () {
     });
 
     it.skip('constructor should be success: ', async () => {
-        assert.equal(await gameLootTreasure.signers(0), signer.address);
+        assert.equal(await gameLootTreasure.signers(signer.address), true);
         assert.equal(await gameLootTreasure.owner(), owner.address);
 
         assert.equal(await body.treasure(), gameLootTreasure.address);
-        assert.equal(await body.signer(), signer.address);
+        assert.equal(await body.signers(signer.address), true);
         assert.equal(await body.vault(), vault.address);
 
         assert.equal(await head.treasure(), gameLootTreasure.address);
-        assert.equal(await head.signer(), signer.address);
+        assert.equal(await head.signers(signer.address), true);
         assert.equal(await head.vault(), vault.address);
 
         assert.equal(await hand.treasure(), gameLootTreasure.address);
-        assert.equal(await hand.signer(), signer.address);
+        assert.equal(await hand.signers(signer.address), true);
         assert.equal(await hand.vault(), vault.address);
 
         assert.equal(await leg.treasure(), gameLootTreasure.address);
-        assert.equal(await leg.signer(), signer.address);
+        assert.equal(await leg.signers(signer.address), true);
         assert.equal(await leg.vault(), vault.address);
 
         assert.equal(await accessory.treasure(), gameLootTreasure.address);
-        assert.equal(await accessory.signer(), signer.address);
+        assert.equal(await accessory.signers(signer.address), signer.address);
         assert.equal(await accessory.vault(), vault.address);
 
         assert.equal(await gameLootSuit.price(), toWei('0.01', "ether"));
@@ -91,7 +91,7 @@ describe("GameLootEquipment", async function () {
         assert.equal(await gameLootSuit.equipments(2), hand.address);
         assert.equal(await gameLootSuit.equipments(3), leg.address);
         assert.equal(await gameLootSuit.equipments(4), accessory.address);
-        assert.equal(await gameLootSuit.signer(), signer.address);
+        assert.equal(await gameLootSuit.signers(signer.address), true);
         assert.equal(await gameLootSuit.vault(), vault.address);
     });
 
@@ -477,19 +477,19 @@ describe("GameLootSuit", async function () {
         const GameLootEquipment = await hre.ethers.getContractFactory("GameLootEquipment");
         const cap = 20;
 
-        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address, signer.address, cap);
+        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address, [signer.address], cap);
         await body.deployed();
 
-        head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", gameLootTreasure.address, vault.address, signer.address, cap);
+        head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", gameLootTreasure.address, vault.address, [signer.address], cap);
         await head.deployed();
 
-        hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", gameLootTreasure.address, vault.address, signer.address, cap);
+        hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", gameLootTreasure.address, vault.address, [signer.address], cap);
         await hand.deployed();
 
-        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, vault.address, signer.address, cap);
+        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, vault.address, [signer.address], cap);
         await leg.deployed();
 
-        accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", gameLootTreasure.address, vault.address, signer.address, cap);
+        accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", gameLootTreasure.address, vault.address, [signer.address], cap);
         await accessory.deployed();
 
         const GameLootSuit = await hre.ethers.getContractFactory("GameLootSuit");
@@ -499,7 +499,7 @@ describe("GameLootSuit", async function () {
             hand.address,
             leg.address,
             accessory.address,
-        ], toWei('0.01', 'ether'), vault.address, signer.address);
+        ], toWei('0.01', 'ether'), vault.address, [signer.address]);
         await gameLootSuit.deployed();
 
         //  set suit address
@@ -773,16 +773,16 @@ describe("GameLootTreasure", async function () {
         const GameLootEquipment = await hre.ethers.getContractFactory("GameLootEquipment");
         const cap = 20;
 
-        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address, signer.address, cap);
+        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address, [signer.address], cap);
         await body.deployed();
 
-        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, vault.address, signer.address, cap);
+        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, vault.address, [signer.address], cap);
         await leg.deployed();
 
         const GameLootSuit = await hre.ethers.getContractFactory("GameLootSuit");
         gameLootSuit = await GameLootSuit.deploy("Monster Engineer Suit", "MESuit", [
             body.address,
-        ], toWei('0.01', 'ether'), vault.address, signer.address);
+        ], toWei('0.01', 'ether'), vault.address, [signer.address]);
         await gameLootSuit.deployed();
 
         //  set suit address

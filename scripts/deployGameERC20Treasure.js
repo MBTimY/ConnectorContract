@@ -4,7 +4,7 @@ async function main() {
     // We get the contract to deploy
     const token = "";
     const GameERC20Treasure = await hre.ethers.getContractFactory("GameERC20Treasure");
-    const gameERC20Treasure = await GameERC20Treasure.deploy(["0xBCcC2073ADfC46421308f62cfD9868dF00D339a8"], token);
+    const gameERC20Treasure = await GameERC20Treasure.deploy(["0xc8fC426d82F807e280CbE506CD381015F46EeE69"], token);
 
     await gameERC20Treasure.deployed();
 
