@@ -7,7 +7,7 @@ import "./GameLoot.sol";
 import "hardhat/console.sol";
 
 contract GameLootEquipment is GameLoot, Ownable {
-    address public signer;
+    mapping(address => bool) public signers;
     address public treasure;
     address public suit;
     address public vault;
@@ -32,13 +32,14 @@ contract GameLootEquipment is GameLoot, Ownable {
         string memory symbol_,
         address treasure_,
         address vault_,
-        address signer_,
+        address[] memory _signers,
         uint256 cap_
     ) GameLoot(name_, symbol_, cap_) {
         require(treasure_ != address(0), "treasure can not be zero");
         treasure = treasure_;
         vault = vault_;
-        signer = signer_;
+        for (uint256 i; i < _signers.length; i++)
+            signers[_signers[i]] = true;
     }
 
     receive() external payable {}
@@ -144,7 +145,7 @@ contract GameLootEquipment is GameLoot, Ownable {
         uint256 nonce_,
         bytes memory signature_
     ) internal view returns (bool){
-        return signatureWallet(wallet_, contract_, nonce_, signature_) == signer;
+        return signers[signatureWallet(wallet_, contract_, nonce_, signature_)];
     }
 
     function signatureWallet(
@@ -167,7 +168,7 @@ contract GameLootEquipment is GameLoot, Ownable {
         uint128[] memory attrValues_,
         bytes memory signature_
     ) internal view returns (bool){
-        return signatureWallet(wallet_, contract_, nonce_, attrIDs_, attrValues_, signature_) == signer;
+        return signers[signatureWallet(wallet_, contract_, nonce_, attrIDs_, attrValues_, signature_)];
     }
 
     function signatureWallet(
@@ -194,7 +195,7 @@ contract GameLootEquipment is GameLoot, Ownable {
         uint128[] memory attrValues_,
         bytes memory signature_
     ) internal view returns (bool){
-        return signatureWallet(wallet_, contract_, tokenID_, nonce_, attrIDs_, attrValues_, signature_) == signer;
+        return signers[signatureWallet(wallet_, contract_, tokenID_, nonce_, attrIDs_, attrValues_, signature_)];
     }
 
     function signatureWallet(
@@ -215,6 +216,14 @@ contract GameLootEquipment is GameLoot, Ownable {
 
     function exists(uint256 tokenId) public view {
         _exists(tokenId);
+    }
+
+    function addSigner(address _signer) public onlyOwner {
+        signers[_signer] = true;
+    }
+
+    function removeSigner(address _signer) public onlyOwner {
+        signers[_signer] = false;
     }
 
     function openPresale() public onlyOwner {

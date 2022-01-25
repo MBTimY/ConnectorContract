@@ -12,7 +12,7 @@ async function main() {
     const admin = "0xBCcC2073ADfC46421308f62cfD9868dF00D339a8"
 
     //  body
-    const body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, admin, admin, cap);
+    const body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, admin, [admin], cap);
     await body.deployed();
     console.log("Body deployed to:", body.address);
 }

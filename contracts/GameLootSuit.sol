@@ -34,7 +34,7 @@ contract GameLootSuit is ERC721, Ownable {
     mapping(address => bool) hasMinted;
     mapping(address => bool) hasPresale;
 
-    address public signer;
+    mapping(address => bool) public signers;
     mapping(uint256 => bool) public usedNonce;
 
     constructor(
@@ -43,12 +43,13 @@ contract GameLootSuit is ERC721, Ownable {
         address[] memory _equipment,
         uint256 _price,
         address _vault,
-        address _signer
+        address[] memory _signers
     ) ERC721(_name, _symbol){
         equipments = _equipment;
         price = _price;
         vault = _vault;
-        signer = _signer;
+        for (uint256 i; i < _signers.length; i++)
+            signers[_signers[i]] = true;
     }
 
     receive() external payable {}
@@ -107,13 +108,13 @@ contract GameLootSuit is ERC721, Ownable {
     function verify(
         uint256 _tokenID,
         address _token,
-        uint256[] memory _equipTokenIDs,
+        uint256[] memory _equipIndexes,
         uint128[][] memory _attrIDs,
         uint128[][] memory _values,
         uint256 _nonce,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWallet(_tokenID, _token, _equipTokenIDs, _attrIDs, _values, _nonce, _signature) == signer;
+        return signers[signatureWallet(_tokenID, _token, _equipIndexes, _attrIDs, _values, _nonce, _signature)];
     }
 
     function signatureWallet(
@@ -137,7 +138,7 @@ contract GameLootSuit is ERC721, Ownable {
         uint256 _nonce,
         bytes memory _signature
     ) internal view returns (bool){
-        return signatureWallet(_wallet, _token, _nonce, _signature) == signer;
+        return signers[signatureWallet(_wallet, _token, _nonce, _signature)];
     }
 
     function signatureWallet(
@@ -187,6 +188,14 @@ contract GameLootSuit is ERC721, Ownable {
     function withdraw() public onlyOwner {
         require(address(this).balance != 0);
         payable(vault).transfer(address(this).balance);
+    }
+
+    function addSigner(address _signer) public onlyOwner {
+        signers[_signer] = true;
+    }
+
+    function removeSigner(address _signer) public onlyOwner {
+        signers[_signer] = false;
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {

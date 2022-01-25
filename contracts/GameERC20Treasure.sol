@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 contract GameERC20Treasure is Ownable, Pausable {
     using SafeERC20 for IERC20;
 
-    address[] public signers;
+    mapping(address => bool) public signers;
     mapping(uint256 => bool) public usedNonce;
 
     address public token;
@@ -19,8 +19,9 @@ contract GameERC20Treasure is Ownable, Pausable {
     event TopUp(address indexed sender, uint256 amount, uint256 nonce);
 
     constructor(address[] memory _signers, address _token){
-        signers = _signers;
         token = _token;
+        for (uint256 i; i < _signers.length; i++)
+            signers[_signers[i]] = true;
     }
 
     receive() external payable {}
@@ -58,7 +59,7 @@ contract GameERC20Treasure is Ownable, Pausable {
         bytes4 _selector,
         bytes memory _signature
     ) public view returns (bool){
-        return isSigner(signatureWallet(_wallet, _this, _token, _amount, _nonce, _selector, _signature));
+        return signers[signatureWallet(_wallet, _this, _token, _amount, _nonce, _selector, _signature)];
     }
 
     function signatureWallet(
@@ -87,21 +88,11 @@ contract GameERC20Treasure is Ownable, Pausable {
     }
 
     function addSigner(address _signer) public onlyOwner {
-        signers.push(_signer);
+        signers[_signer] = true;
     }
 
-    function removeSigner(uint256 _index) public onlyOwner {
-        signers[_index] = signers[signers.length - 1];
-        signers.pop();
-    }
-
-    function isSigner(address s) internal view returns (bool){
-        for (uint256 i; i < signers.length; i++) {
-            if (s == signers[i]) {
-                return true;
-            }
-        }
-        return false;
+    function removeSigner(address _signer) public onlyOwner {
+        signers[_signer] = false;
     }
 
     modifier nonceNotUsed(uint256 _nonce){

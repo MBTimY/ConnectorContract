@@ -15,29 +15,30 @@ async function main() {
     const GameLootEquipment = await ethers.getContractFactory("GameLootEquipment");
     const cap = 20;
     const admin = "0xBCcC2073ADfC46421308f62cfD9868dF00D339a8"
+    const signer = "0xc8fC426d82F807e280CbE506CD381015F46EeE69"
 
     //  body
-    const body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, admin, admin, cap);
+    const body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, admin, [signer], cap);
     await body.deployed();
     console.log("Body deployed to:", body.address);
 
     //  head
-    const head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", gameLootTreasure.address, admin, admin, cap);
+    const head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", gameLootTreasure.address, admin, [signer], cap);
     await head.deployed();
     console.log("Head deployed to:", head.address);
 
     //  hand
-    const hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", gameLootTreasure.address, admin, admin, cap);
+    const hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", gameLootTreasure.address, admin, [signer], cap);
     await hand.deployed();
     console.log("Hand deployed to:", hand.address);
 
     //  leg
-    const leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, admin, admin, cap);
+    const leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, admin, [signer], cap);
     await leg.deployed();
     console.log("Leg deployed to:", leg.address);
 
     //  accessory
-    const accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", gameLootTreasure.address, admin, admin, cap);
+    const accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", gameLootTreasure.address, admin, [signer], cap);
     await accessory.deployed();
     console.log("Accessory deployed to:", accessory.address);
 
@@ -49,7 +50,7 @@ async function main() {
         hand.address,
         leg.address,
         accessory.address,
-    ], "10000000000000000", admin, admin);
+    ], "10000000000000000", admin, [signer]);
     await gameLootSuit.deployed();
     console.log("gameLootSuit deployed to:", gameLootSuit.address);
 }
