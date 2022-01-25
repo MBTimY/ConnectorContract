@@ -3,7 +3,7 @@ const {ethers} = require("hardhat");
 async function main() {
     //  treasure
     const GameLootTreasure = await ethers.getContractFactory("GameLootTreasure");
-    const gameLootTreasure = await GameLootTreasure.deploy("0xBCcC2073ADfC46421308f62cfD9868dF00D339a8");
+    const gameLootTreasure = await GameLootTreasure.deploy(["0xBCcC2073ADfC46421308f62cfD9868dF00D339a8"]);
     await gameLootTreasure.deployed();
     console.log("gameLootTreasure deployed to:", gameLootTreasure.address);
 
