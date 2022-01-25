@@ -120,8 +120,9 @@ contract GameLootEquipment is GameLoot, Ownable {
 
         _attachBatch(totalSupply, attrIDs_, attrValues_);
 
-        _safeMint(msg.sender, totalSupply);
-        emit GameMint(msg.sender, totalSupply, nonce_);
+        uint256 tokenID = totalSupply;
+        _safeMint(msg.sender, tokenID);
+        emit GameMint(msg.sender, tokenID, nonce_);
     }
 
     /// @notice Mint from suit contract
