@@ -18,10 +18,10 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
             signers[_signers[i]] = true;
     }
 
-    event UpChain(address token, uint256 tokenID, uint256 nonce);
-    event TopUp(address token, uint256 tokenID, uint256 nonce);
-    event UpChainBatch(address[] tokens, uint256[] tokenIDs, uint256 nonce);
-    event TopUpBatch(address[] tokens, uint256[] tokenIDs, uint256 nonce);
+    event UpChain(address indexed sender, address token, uint256 tokenID, uint256 nonce);
+    event TopUp(address indexed sender, address token, uint256 tokenID, uint256 nonce);
+    event UpChainBatch(address indexed sender, address[] tokens, uint256[] tokenIDs, uint256 nonce);
+    event TopUpBatch(address indexed sender, address[] tokens, uint256[] tokenIDs, uint256 nonce);
 
     receive() external payable {}
 
@@ -53,7 +53,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
 
         lastOwner[_tokenID] = address(0);
         IERC721(_token).transferFrom(address(this), msg.sender, _tokenID);
-        emit UpChain(_token, _tokenID, _nonce);
+        emit UpChain(msg.sender, _token, _tokenID, _nonce);
     }
 
     /// @notice Top up
@@ -69,7 +69,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
 
         lastOwner[_tokenID] = msg.sender;
         IERC721(_token).transferFrom(msg.sender, address(this), _tokenID);
-        emit TopUp(_token, _tokenID, _nonce);
+        emit TopUp(msg.sender, _token, _tokenID, _nonce);
     }
 
     /// @notice Multi In-game assets set on chain
@@ -100,7 +100,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
 
             IERC721(_tokens[i]).transferFrom(address(this), msg.sender, _tokenIDs[i]);
         }
-        emit UpChainBatch(_tokens, _tokenIDs, _nonce);
+        emit UpChainBatch(msg.sender, _tokens, _tokenIDs, _nonce);
     }
 
     /// @notice Top up Multi NFTs
@@ -117,7 +117,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         for (uint256 i; i < _tokens.length; i++) {
             IERC721(_tokens[i]).transferFrom(msg.sender, address(this), _tokenIDs[i]);
         }
-        emit TopUpBatch(_tokens, _tokenIDs, _nonce);
+        emit TopUpBatch(msg.sender, _tokens, _tokenIDs, _nonce);
     }
 
     function verify(
