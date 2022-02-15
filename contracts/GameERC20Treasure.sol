@@ -40,10 +40,8 @@ contract GameERC20Treasure is Ownable, Pausable {
 
     function topUp(
         uint256 _amount,
-        uint256 _nonce,
-        bytes memory _signature
+        uint256 _nonce
     ) public nonceNotUsed(_nonce) whenNotPaused {
-        require(verify(msg.sender, address(this), token, _amount, _nonce, this.topUp.selector, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), _amount);
