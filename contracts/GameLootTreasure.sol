@@ -61,10 +61,8 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
     function topUp(
         address _token,
         uint256 _tokenID,
-        uint256 _nonce,
-        bytes memory _signature
+        uint256 _nonce
     ) public whenNotPaused nonceNotUsed(_nonce) {
-        require(verify(msg.sender, address(this), _token, _tokenID, _nonce, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         lastOwner[_tokenID] = msg.sender;
@@ -108,10 +106,8 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
     function topUpBatch(
         address[] memory _tokens,
         uint256[] memory _tokenIDs,
-        uint256 _nonce,
-        bytes memory _signature
+        uint256 _nonce
     ) public whenNotPaused nonceNotUsed(_nonce) {
-        require(verify(msg.sender, address(this), _tokens, _tokenIDs, _nonce, _signature), "sign is not correct");
         usedNonce[_nonce] = true;
 
         for (uint256 i; i < _tokens.length; i++) {
