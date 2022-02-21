@@ -846,7 +846,7 @@ describe("GameLootTreasure", async function () {
         );
     })
 
-    it('topUp should be success: ', async () => {
+    it.only('topUp should be success: ', async () => {
         const tokenID = 0;
         const nonce = 0;
 
@@ -857,6 +857,15 @@ describe("GameLootTreasure", async function () {
         );
         const hash = hre.ethers.utils.keccak256(originalData);
         const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
+
+        const wallet = new hre.ethers.Wallet("4def947da746a0607d33ef65e9052a6a2f3b049e074f8de799c107c588ad09e6")
+        const originalData_ = hre.ethers.utils.defaultAbiCoder.encode(
+            ["uint32"],
+            [3351092322]
+        );
+        const hash_ = hre.ethers.utils.keccak256(originalData_);
+        const signData_ = await wallet.signMessage(web3Utils.hexToBytes(hash_));
+        console.log(signData_,signData_.length);
 
         await body.connect(user).setApprovalForAll(gameLootTreasure.address, true);
         await gameLootTreasure.connect(user).topUp(body.address, tokenID, nonce, signData);

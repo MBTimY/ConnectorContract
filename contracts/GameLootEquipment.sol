@@ -3,14 +3,16 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "./GameLoot.sol";
 import "hardhat/console.sol";
 
-contract GameLootEquipment is GameLoot, Ownable {
+contract GameLootEquipment is GameLoot, Pausable, Ownable {
     mapping(address => bool) public signers;
     address public treasure;
     address public suit;
     address public vault;
+    address public controller;
     mapping(uint256 => bool) public usedNonce;
 
     uint256 public totalSupply;
@@ -30,13 +32,16 @@ contract GameLootEquipment is GameLoot, Ownable {
     constructor(
         string memory name_,
         string memory symbol_,
+        address controller_,
         address treasure_,
         address vault_,
         address[] memory _signers,
         uint256 cap_
     ) GameLoot(name_, symbol_, cap_) {
         require(treasure_ != address(0), "treasure can not be zero");
+        require(controller_ != address(0), "controller can not be zero");
         treasure = treasure_;
+        controller = controller_;
         vault = vault_;
         for (uint256 i; i < _signers.length; i++)
             signers[_signers[i]] = true;
@@ -112,7 +117,7 @@ contract GameLootEquipment is GameLoot, Ownable {
         uint128[] memory attrIDs_,
         uint128[] memory attrValues_,
         bytes memory signature_
-    ) public {
+    ) public whenNotPaused {
         require(!usedNonce[nonce_], "nonce is used");
         require(verify(msg.sender, address(this), nonce_, attrIDs_, attrValues_, signature_), "sign is not correct");
         require(attrIDs_.length == attrValues_.length, "param length error");
@@ -303,9 +308,21 @@ contract GameLootEquipment is GameLoot, Ownable {
         suit = suit_;
     }
 
+    function setController(address _controller) public onlyOwner {
+        controller = _controller;
+    }
+
     function withdraw() public onlyOwner {
         require(address(this).balance != 0);
         payable(vault).transfer(address(this).balance);
+    }
+
+    function pause() public onlyController {
+        _pause();
+    }
+
+    function unPause() public onlyController {
+        _unpause();
     }
 
     function _beforeTokenTransfer(
@@ -321,6 +338,11 @@ contract GameLootEquipment is GameLoot, Ownable {
 
     modifier onlyTreasure(){
         require(msg.sender == treasure, "is not treasure");
+        _;
+    }
+
+    modifier onlyController(){
+        require(msg.sender == controller, "only controller");
         _;
     }
 }

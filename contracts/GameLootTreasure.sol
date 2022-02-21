@@ -9,11 +9,14 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./IGameLoot.sol";
 
 contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
+    address public controller;
     mapping(uint256 => bool) public usedNonce;
     mapping(uint256 => address) public lastOwner;
     mapping(address => bool) public signers;
 
-    constructor(address[] memory _signers){
+    constructor(address _controller, address[] memory _signers){
+        require(_controller != address(0), "controller can not be zero");
+        controller = _controller;
         for (uint256 i; i < _signers.length; i++)
             signers[_signers[i]] = true;
     }
@@ -236,11 +239,11 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
 
-    function pause() public onlyOwner {
+    function pause() public onlyController {
         _pause();
     }
 
-    function unPause() public onlyOwner {
+    function unPause() public onlyController {
         _unpause();
     }
 
@@ -250,6 +253,10 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
 
     function removeSigner(address _signer) public onlyOwner {
         signers[_signer] = false;
+    }
+
+    function setController(address _controller) public onlyOwner {
+        controller = _controller;
     }
 
     function unLockEther() public onlyOwner {
@@ -267,6 +274,11 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
 
     modifier nonceNotUsed(uint256 _nonce){
         require(!usedNonce[_nonce], "nonce already used");
+        _;
+    }
+
+    modifier onlyController(){
+        require(msg.sender == controller, "only controller");
         _;
     }
 }
