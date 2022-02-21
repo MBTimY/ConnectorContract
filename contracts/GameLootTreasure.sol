@@ -255,6 +255,10 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         signers[_signer] = false;
     }
 
+    function setController(address _controller) public onlyOwner {
+        controller = _controller;
+    }
+
     function unLockEther() public onlyOwner {
         payable(owner()).transfer(address(this).balance);
     }

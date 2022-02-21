@@ -308,6 +308,10 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         suit = suit_;
     }
 
+    function setController(address _controller) public onlyOwner {
+        controller = _controller;
+    }
+
     function withdraw() public onlyOwner {
         require(address(this).balance != 0);
         payable(vault).transfer(address(this).balance);
