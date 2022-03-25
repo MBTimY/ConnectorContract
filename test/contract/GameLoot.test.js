@@ -18,26 +18,26 @@ describe("GameLootEquipment", async function () {
         [owner, user, signer, vault, user1] = await hre.ethers.getSigners();
 
         const GameLootTreasure = await hre.ethers.getContractFactory("GameLootTreasure");
-        gameLootTreasure = await GameLootTreasure.deploy([signer.address]);
+        gameLootTreasure = await GameLootTreasure.deploy(owner.address, [signer.address]);
         await gameLootTreasure.deployed();
 
         // We get the contract to deploy
         const GameLootEquipment = await hre.ethers.getContractFactory("GameLootEquipment");
         const cap = 20;
 
-        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address, [signer.address], cap);
+        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", owner.address, gameLootTreasure.address, vault.address, [signer.address], cap);
         await body.deployed();
 
-        head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", gameLootTreasure.address, vault.address, [signer.address], cap);
+        head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", owner.address, gameLootTreasure.address, vault.address, [signer.address], cap);
         await head.deployed();
 
-        hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", gameLootTreasure.address, vault.address, [signer.address], cap);
+        hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", owner.address, gameLootTreasure.address, vault.address, [signer.address], cap);
         await hand.deployed();
 
-        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, vault.address, [signer.address], cap);
+        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", owner.address, gameLootTreasure.address, vault.address, [signer.address], cap);
         await leg.deployed();
 
-        accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", gameLootTreasure.address, vault.address, [signer.address], cap);
+        accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", owner.address, gameLootTreasure.address, vault.address, [signer.address], cap);
         await accessory.deployed();
 
         const GameLootSuit = await hre.ethers.getContractFactory("GameLootSuit");
@@ -61,7 +61,7 @@ describe("GameLootEquipment", async function () {
         await body.setPrice(toWei('0.01', "ether"));
     });
 
-    it.skip('constructor should be success: ', async () => {
+    it('constructor should be success: ', async () => {
         assert.equal(await gameLootTreasure.signers(signer.address), true);
         assert.equal(await gameLootTreasure.owner(), owner.address);
 
@@ -99,7 +99,7 @@ describe("GameLootEquipment", async function () {
 
     });
 
-    it.skip('constructor params access should be success: ', async () => {
+    it('constructor params access should be success: ', async () => {
         //  treasure
         await gameLootTreasure.connect(owner).addSigner(user.address);
         assert.equal(await gameLootTreasure.signers(1), user.address);
@@ -470,26 +470,26 @@ describe("GameLootSuit", async function () {
         [owner, user, signer, vault, user1] = await hre.ethers.getSigners();
 
         const GameLootTreasure = await hre.ethers.getContractFactory("GameLootTreasure");
-        gameLootTreasure = await GameLootTreasure.deploy([signer.address]);
+        gameLootTreasure = await GameLootTreasure.deploy(owner.address,[signer.address]);
         await gameLootTreasure.deployed();
 
         // We get the contract to deploy
         const GameLootEquipment = await hre.ethers.getContractFactory("GameLootEquipment");
         const cap = 20;
 
-        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address, [signer.address], cap);
+        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", owner.address,gameLootTreasure.address, vault.address, [signer.address], cap);
         await body.deployed();
 
-        head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", gameLootTreasure.address, vault.address, [signer.address], cap);
+        head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", owner.address,gameLootTreasure.address, vault.address, [signer.address], cap);
         await head.deployed();
 
-        hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", gameLootTreasure.address, vault.address, [signer.address], cap);
+        hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", owner.address,gameLootTreasure.address, vault.address, [signer.address], cap);
         await hand.deployed();
 
-        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, vault.address, [signer.address], cap);
+        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", owner.address,gameLootTreasure.address, vault.address, [signer.address], cap);
         await leg.deployed();
 
-        accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", gameLootTreasure.address, vault.address, [signer.address], cap);
+        accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", owner.address,gameLootTreasure.address, vault.address, [signer.address], cap);
         await accessory.deployed();
 
         const GameLootSuit = await hre.ethers.getContractFactory("GameLootSuit");
@@ -546,6 +546,7 @@ describe("GameLootSuit", async function () {
         await gameLootSuit.connect(user).mint({value: v});
 
         assert.equal(await gameLootSuit.balanceOf(user.address), 1);
+        assert.equal(await gameLootSuit.numberMinted(user.address), 1);
     })
 
     it('tokenURI should be success: ', async () => {
@@ -565,7 +566,7 @@ describe("GameLootSuit", async function () {
         assert.equal(await gameLootSuit.tokenURI(0), baseURI + '0');
     })
 
-    it('presale should be revert: ', async () => {
+    it.only('presale should be revert: ', async () => {
         const nonce = 0;
         const price = await gameLootSuit.price();
         //  generate hash
@@ -766,17 +767,19 @@ describe("GameLootTreasure", async function () {
         [owner, user, signer, vault, user1] = await hre.ethers.getSigners();
 
         const GameLootTreasure = await hre.ethers.getContractFactory("GameLootTreasure");
-        gameLootTreasure = await GameLootTreasure.deploy([signer.address]);
+        console.log("========1")
+        gameLootTreasure = await GameLootTreasure.deploy(owner.address, [signer.address]);
+        console.log("========2")
         await gameLootTreasure.deployed();
 
         // We get the contract to deploy
         const GameLootEquipment = await hre.ethers.getContractFactory("GameLootEquipment");
         const cap = 20;
 
-        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, vault.address, [signer.address], cap);
+        body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", owner.address, gameLootTreasure.address, vault.address, [signer.address], cap);
         await body.deployed();
 
-        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, vault.address, [signer.address], cap);
+        leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", owner.address, gameLootTreasure.address, vault.address, [signer.address], cap);
         await leg.deployed();
 
         const GameLootSuit = await hre.ethers.getContractFactory("GameLootSuit");
@@ -846,7 +849,7 @@ describe("GameLootTreasure", async function () {
         );
     })
 
-    it.only('topUp should be success: ', async () => {
+    it('topUp should be success: ', async () => {
         const tokenID = 0;
         const nonce = 0;
 
@@ -858,14 +861,22 @@ describe("GameLootTreasure", async function () {
         const hash = hre.ethers.utils.keccak256(originalData);
         const signData = await signer.signMessage(web3Utils.hexToBytes(hash));
 
-        const wallet = new hre.ethers.Wallet("4def947da746a0607d33ef65e9052a6a2f3b049e074f8de799c107c588ad09e6")
-        const originalData_ = hre.ethers.utils.defaultAbiCoder.encode(
+        const wallet = new hre.ethers.Wallet("0000000000000000000000000000000000000000000000000000000000000001")
+        /*const originalData_ = hre.ethers.utils.defaultAbiCoder.encode(
             ["uint32"],
             [3351092322]
         );
         const hash_ = hre.ethers.utils.keccak256(originalData_);
         const signData_ = await wallet.signMessage(web3Utils.hexToBytes(hash_));
-        console.log(signData_,signData_.length);
+        console.log(signData_, signData_.length);*/
+
+        const originalData__ = hre.ethers.utils.defaultAbiCoder.encode(
+            ["string", "address"],
+            ["monster_engineer_is_yours", "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"]
+        );
+        const hash__ = hre.ethers.utils.keccak256(originalData__);
+        const signData__ = await wallet.signMessage(web3Utils.hexToBytes(hash__));
+        console.log(signData__, signData__.length);
 
         await body.connect(user).setApprovalForAll(gameLootTreasure.address, true);
         await gameLootTreasure.connect(user).topUp(body.address, tokenID, nonce, signData);

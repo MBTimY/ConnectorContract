@@ -6,51 +6,52 @@
 const {ethers} = require("hardhat");
 
 async function main() {
+    const admin = "0xBCcC2073ADfC46421308f62cfD9868dF00D339a8"
+    const signers = ["0xCB2eb8fc8dDb96038C3ef8Be0058e206df9B1565", "0x03ac95391feB5E77F9D835b2E9C2d03aCfEA140D"]
+
     //  treasure
     const GameLootTreasure = await ethers.getContractFactory("GameLootTreasure");
-    const gameLootTreasure = await GameLootTreasure.deploy(["0xBCcC2073ADfC46421308f62cfD9868dF00D339a8"]);
+    const gameLootTreasure = await GameLootTreasure.deploy(admin, signers);
     await gameLootTreasure.deployed();
     console.log("gameLootTreasure deployed to:", gameLootTreasure.address);
 
     const GameLootEquipment = await ethers.getContractFactory("GameLootEquipment");
-    const cap = 20;
-    const admin = "0xBCcC2073ADfC46421308f62cfD9868dF00D339a8"
-    const signer = "0xc8fC426d82F807e280CbE506CD381015F46EeE69"
+    const cap = 50;
 
     //  body
-    const body = await GameLootEquipment.deploy("Monster Engineer Body", "MEBody", gameLootTreasure.address, admin, [signer], cap);
+    const body = await GameLootEquipment.deploy("Monster Engineer Body", "MBody", admin, gameLootTreasure.address, admin, signers, cap);
     await body.deployed();
     console.log("Body deployed to:", body.address);
 
     //  head
-    const head = await GameLootEquipment.deploy("Monster Engineer Head", "MEHead", gameLootTreasure.address, admin, [signer], cap);
+    const head = await GameLootEquipment.deploy("Monster Engineer Head", "MHead", admin, gameLootTreasure.address, admin, signers, cap);
     await head.deployed();
     console.log("Head deployed to:", head.address);
 
     //  hand
-    const hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MEHand", gameLootTreasure.address, admin, [signer], cap);
+    const hand = await GameLootEquipment.deploy("Monster Engineer Hand", "MHand", admin, gameLootTreasure.address, admin, signers, cap);
     await hand.deployed();
     console.log("Hand deployed to:", hand.address);
 
     //  leg
-    const leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MELeg", gameLootTreasure.address, admin, [signer], cap);
+    const leg = await GameLootEquipment.deploy("Monster Engineer Leg", "MLeg", admin, gameLootTreasure.address, admin, signers, cap);
     await leg.deployed();
     console.log("Leg deployed to:", leg.address);
 
     //  accessory
-    const accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MEAccessory", gameLootTreasure.address, admin, [signer], cap);
+    const accessory = await GameLootEquipment.deploy("Monster Engineer Accessory", "MAccessory", admin, gameLootTreasure.address, admin, signers, cap);
     await accessory.deployed();
     console.log("Accessory deployed to:", accessory.address);
 
 
     const GameLootSuit = await ethers.getContractFactory("GameLootSuit");
-    const gameLootSuit = await GameLootSuit.deploy("Monster Engineer Suit", "MESuit", [
+    const gameLootSuit = await GameLootSuit.deploy("Monster Engineer Suit", "MSuit", [
         body.address,
         head.address,
         hand.address,
         leg.address,
         accessory.address,
-    ], "10000000000000000", admin, [signer]);
+    ], "10000000000000000", admin, signers);
     await gameLootSuit.deployed();
     console.log("gameLootSuit deployed to:", gameLootSuit.address);
 }

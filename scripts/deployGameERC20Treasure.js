@@ -2,9 +2,11 @@ const hre = require("hardhat");
 
 async function main() {
     // We get the contract to deploy
-    const token = "";
+    const token = "0xbCEA91b6c849ddBC39c46e75D2605D58f5DD2517";
+    const signers = ["0xCB2eb8fc8dDb96038C3ef8Be0058e206df9B1565", "0x03ac95391feB5E77F9D835b2E9C2d03aCfEA140D"];
+    const controller = "0xBCcC2073ADfC46421308f62cfD9868dF00D339a8";
     const GameERC20Treasure = await hre.ethers.getContractFactory("GameERC20Treasure");
-    const gameERC20Treasure = await GameERC20Treasure.deploy(["0xc8fC426d82F807e280CbE506CD381015F46EeE69"], token);
+    const gameERC20Treasure = await GameERC20Treasure.deploy(signers, token, controller);
 
     await gameERC20Treasure.deployed();
 

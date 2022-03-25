@@ -16,11 +16,13 @@ interface IEquipment {
 contract GameLootSuit is ERC721, Ownable {
     using Strings for uint256;
 
-    uint64 constant public maxSupply = 2200;
+    //  receive ETH
+    address public vault;
+
+    uint64 immutable public maxSupply = 2200;
     uint64 public maxPresale;
     uint64 public presaleAmount;
     uint64 public totalSupply;
-    address public vault;
 
     string private baseURI;
     string private unRevealedBaseURI;
@@ -29,10 +31,14 @@ contract GameLootSuit is ERC721, Ownable {
     bool public publicStart;
     bool public presaleStart;
 
+    //  auction
+    uint64 public auctionStartTime;
+    uint64 public maxPerAddressDuringAuction = 3;
+    mapping(address => uint256) public numberMinted;
+
     address[] public equipments;
 
-    mapping(address => bool) hasMinted;
-    mapping(address => bool) hasPresale;
+    mapping(address => uint256) public preAmount;
 
     mapping(address => bool) public signers;
     mapping(uint256 => bool) public usedNonce;
@@ -56,29 +62,73 @@ contract GameLootSuit is ERC721, Ownable {
 
     /// @notice public mint
     /// @dev Each address can only mint once, only one can be minted at a time
-    function mint() public payable {
+    function mint() external payable callerIsUser {
         require(publicStart, "public mint is not start");
-        require(tx.origin == msg.sender, "forbidden tx");
-        require(!hasMinted[msg.sender], "has minted");
+        require(numberMinted[msg.sender] == 0, "has minted");
         require(msg.value >= price, "tx value is not correct");
 
-        hasMinted[msg.sender] = true;
+        numberMinted[msg.sender] ++;
         _safeMint(msg.sender, totalSupply);
     }
 
     /// @notice presale
-    /// @dev Need to sign
-    function presale(uint256 _nonce, bytes memory _signature) public payable {
+    /// @dev presale for white list
+    function presale(uint64 _amount) external payable {
         require(presaleStart, "presale is not start");
-        require(!usedNonce[_nonce], "nonce is used");
-        require(msg.value >= price, "tx value is not correct");
-        presaleAmount ++;
+        require(preAmount[msg.sender] >= _amount, "can't mint so many");
+        require(msg.value >= price * _amount, "tx value is not correct");
+        presaleAmount += _amount;
         require(presaleAmount <= maxPresale, "presale out");
-        require(verify(msg.sender, address(this), _nonce, _signature), "sign is not correct");
 
-        usedNonce[_nonce] = true;
+        preAmount[msg.sender] -= _amount;
+        for (uint256 i; i < _amount; i++)
+            _safeMint(msg.sender, totalSupply);
+    }
 
-        _safeMint(msg.sender, totalSupply);
+    function auctionMint(uint64 _amount) external payable callerIsUser {
+        uint256 _saleStartTime = uint256(auctionStartTime);
+        require(
+            _saleStartTime != 0 && block.timestamp >= _saleStartTime,
+            "sale has not started yet"
+        );
+        require(
+            numberMinted[msg.sender] + _amount <= maxPerAddressDuringAuction,
+            "can not mint this many"
+        );
+        if (totalSupply + _amount > maxSupply)
+            _amount = maxSupply - totalSupply;
+
+        uint256 totalCost = getAuctionPrice(_saleStartTime) * _amount;
+        for (uint256 i; i < _amount; i++)
+            _safeMint(msg.sender, totalSupply);
+
+        refundIfOver(totalCost);
+    }
+
+    function refundIfOver(uint256 cost) private {
+        require(msg.value >= cost, "Need to send more ETH.");
+        if (msg.value > cost) {
+            payable(msg.sender).transfer(msg.value - cost);
+        }
+    }
+
+    uint256 public constant AUCTION_START_PRICE = 5 ether;
+    uint256 public constant AUCTION_END_PRICE = 0.5 ether;
+    uint256 public constant AUCTION_PRICE_CURVE_LENGTH = 360 minutes;
+    uint256 public constant AUCTION_DROP_INTERVAL = 20 minutes;
+    uint256 public constant AUCTION_DROP_PER_STEP = (AUCTION_START_PRICE - AUCTION_END_PRICE) / (AUCTION_PRICE_CURVE_LENGTH / AUCTION_DROP_INTERVAL);
+
+    function getAuctionPrice(uint256 _saleStartTime) public view returns (uint256) {
+        if (block.timestamp < _saleStartTime) {
+            return AUCTION_START_PRICE;
+        }
+        if (block.timestamp - _saleStartTime >= AUCTION_PRICE_CURVE_LENGTH) {
+            return AUCTION_END_PRICE;
+        } else {
+            uint256 steps = (block.timestamp - _saleStartTime) /
+            AUCTION_DROP_INTERVAL;
+            return AUCTION_START_PRICE - (steps * AUCTION_DROP_PER_STEP);
+        }
     }
 
     /// @notice Divide suit
@@ -132,27 +182,6 @@ contract GameLootSuit is ERC721, Ownable {
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
     }
 
-    function verify(
-        address _wallet,
-        address _token,
-        uint256 _nonce,
-        bytes memory _signature
-    ) internal view returns (bool){
-        return signers[signatureWallet(_wallet, _token, _nonce, _signature)];
-    }
-
-    function signatureWallet(
-        address _wallet,
-        address _token,
-        uint256 _nonce,
-        bytes memory _signature
-    ) internal pure returns (address){
-        bytes32 hash = keccak256(
-            abi.encode(_wallet, _token, _nonce)
-        );
-        return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _signature);
-    }
-
     function setBaseTokenURI(string memory _uri) public onlyOwner {
         baseURI = _uri;
     }
@@ -162,6 +191,7 @@ contract GameLootSuit is ERC721, Ownable {
     }
 
     function setMaxPresale(uint64 _maxPresale) public onlyOwner {
+        require(_maxPresale <= maxSupply, "can not exceed maxSupply");
         maxPresale = _maxPresale;
     }
 
@@ -198,6 +228,18 @@ contract GameLootSuit is ERC721, Ownable {
         signers[_signer] = false;
     }
 
+    function setAuctionStartTime(uint64 _auctionStartTime) public onlyOwner {
+        auctionStartTime = _auctionStartTime;
+    }
+
+    function setMaxPerAddressDuringAuction(uint64 _maxPerAddressDuringAuction) public onlyOwner {
+        maxPerAddressDuringAuction = _maxPerAddressDuringAuction;
+    }
+
+    function setPresaleUserAmount(address _user, uint256 _amount) public onlyOwner {
+        preAmount[_user] = _amount;
+    }
+
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
@@ -218,5 +260,10 @@ contract GameLootSuit is ERC721, Ownable {
             totalSupply ++;
             require(totalSupply <= maxSupply, "suit sold out");
         }
+    }
+
+    modifier callerIsUser() {
+        require(tx.origin == msg.sender, "The caller is another contract");
+        _;
     }
 }

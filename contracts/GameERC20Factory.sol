@@ -23,17 +23,20 @@ contract GameERC20Factory is Ownable, Pausable {
 
     /// @notice the function to mint a new vault
     /// @param _name the desired name of the vault
-    /// @param _symbol the desired sumbol of the vault
-    /// @return the ID of the vault
+    /// @param _symbol the desired symbol of the vault
+    /// @param _cap the maximum capacity of the vault
+    /// @return _index the index of the vault in vaults
     function generate(
         string memory _name,
-        string memory _symbol
-    ) external whenNotPaused returns (uint256) {
+        string memory _symbol,
+        uint256 _cap
+    ) external whenNotPaused returns (uint256 _index) {
         bytes memory _initializationCallData =
         abi.encodeWithSignature(
-            "initialize(string,string,address)",
+            "initialize(string,string,uint256,address)",
             _name,
             _symbol,
+            _cap,
             msg.sender
         );
 

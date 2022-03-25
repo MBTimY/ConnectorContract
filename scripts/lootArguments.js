@@ -1,0 +1,11 @@
+module.exports = [
+    "Monster Engineer Body", "MBody",
+    "0xBCcC2073ADfC46421308f62cfD9868dF00D339a8",
+    "0xc54D167A093468F6Ed187e43c68F9c8632Bebd06",
+    "0xBCcC2073ADfC46421308f62cfD9868dF00D339a8",
+    [
+        "0xCB2eb8fc8dDb96038C3ef8Be0058e206df9B1565",
+        "0x03ac95391feB5E77F9D835b2E9C2d03aCfEA140D",
+    ],
+    50
+];

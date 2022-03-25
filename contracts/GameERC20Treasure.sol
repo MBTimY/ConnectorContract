@@ -13,12 +13,14 @@ contract GameERC20Treasure is Ownable, Pausable {
     mapping(address => bool) public signers;
     mapping(uint256 => bool) public usedNonce;
 
+    address public controller;
     address public token;
 
     event UpChain(address indexed sender, uint256 amount, uint256 nonce);
     event TopUp(address indexed sender, uint256 amount, uint256 nonce);
 
-    constructor(address[] memory _signers, address _token){
+    constructor(address[] memory _signers, address _token, address _controller){
+        controller = _controller;
         token = _token;
         for (uint256 i; i < _signers.length; i++)
             signers[_signers[i]] = true;
@@ -77,11 +79,11 @@ contract GameERC20Treasure is Ownable, Pausable {
         payable(owner()).transfer(address(this).balance);
     }
 
-    function pause() public onlyOwner {
+    function pause() public onlyController {
         _pause();
     }
 
-    function unPause() public onlyOwner {
+    function unPause() public onlyController {
         _unpause();
     }
 
@@ -93,8 +95,17 @@ contract GameERC20Treasure is Ownable, Pausable {
         signers[_signer] = false;
     }
 
+    function setController(address _controller) public onlyOwner {
+        controller = _controller;
+    }
+
     modifier nonceNotUsed(uint256 _nonce){
         require(!usedNonce[_nonce], "nonce already used");
+        _;
+    }
+
+    modifier onlyController(){
+        require(msg.sender == controller, "only controller");
         _;
     }
 }
