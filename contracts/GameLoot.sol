@@ -4,16 +4,12 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./IGameLoot.sol";
 import "./Base64.sol";
+import "./Struct.sol";
 
 abstract contract GameLoot is ERC721, IGameLoot {
     struct AttributeBaseData {
         uint8 decimal;
         bool exist;
-    }
-
-    struct AttributeData {
-        uint128 attrID;
-        uint128 attrValue;
     }
 
     // attrID => decimal
@@ -145,6 +141,11 @@ abstract contract GameLoot is ERC721, IGameLoot {
         output = string(abi.encodePacked('data:application/json;base64,', json));
 
         return output;
+    }
+
+    function tokenURIGame(uint256 tokenID, address registry) public view returns (string memory){
+        GameLoot dataContract = GameLoot(registry);
+        return dataContract.tokenURI(tokenID);
     }
 
     function toString(uint256 value) internal pure returns (string memory) {

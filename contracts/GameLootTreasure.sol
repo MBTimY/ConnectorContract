@@ -90,6 +90,7 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         usedNonce[_nonce] = true;
 
         for (uint256 i; i < _tokens.length; i++) {
+            require(msg.sender == lastOwner[_tokenIDs[i]], "only person who topped up it");
             if (_attrIDs[i].length != 0)
                 IGameLoot(_tokens[i]).attachBatch(_tokenIDs[i], _attrIDs[i], _attrValues[i]);
 
@@ -114,6 +115,8 @@ contract GameLootTreasure is Ownable, Pausable, IERC721Receiver {
         usedNonce[_nonce] = true;
 
         for (uint256 i; i < _tokens.length; i++) {
+            lastOwner[_tokenIDs[i]] = msg.sender;
+
             IERC721(_tokens[i]).transferFrom(msg.sender, address(this), _tokenIDs[i]);
         }
         emit TopUpBatch(msg.sender, _tokens, _tokenIDs, _nonce);
