@@ -42,6 +42,11 @@ module.exports = {
             accounts:
                 process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
         },
+        bsc: {
+            url: process.env.BSC_URL || "",
+            accounts:
+                process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+        },
         bsc_test: {
             url: process.env.BSC_TEST_URL || "",
             accounts:
@@ -53,6 +58,6 @@ module.exports = {
         currency: "USD",
     },
     etherscan: {
-        apiKey: process.env.ETHERSCAN_API_KEY,
+        apiKey: process.env.BSC_API_KEY,
     },
 };

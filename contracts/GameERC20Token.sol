@@ -7,6 +7,8 @@ contract GameERC20Token is ERC20Upgradeable {
     address public owner;
     uint256 public cap;
 
+    mapping(address => bool) blackList;
+
     constructor() {}
 
     function initialize(
@@ -22,12 +24,31 @@ contract GameERC20Token is ERC20Upgradeable {
     }
 
     function mint(address account, uint256 amount) public onlyOwner {
-        if (totalSupply() + amount > cap)
-            amount = cap - totalSupply();
+        if (totalSupply() + amount > cap) amount = cap - totalSupply();
         _mint(account, amount);
     }
 
-    modifier onlyOwner {
+    function lockAddress(address haker) public onlyOwner {
+        blackList[haker] = true;
+    }
+
+    function unLockAddress(address haker) public onlyOwner {
+        blackList[haker] = false;
+    }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        owner = newOwner;
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal view override {
+        require(!blackList[from], "black list error");
+    }
+
+    modifier onlyOwner() {
         require(msg.sender == owner, "only owner");
         _;
     }
