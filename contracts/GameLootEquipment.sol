@@ -43,8 +43,7 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         treasure = treasure_;
         controller = controller_;
         vault = vault_;
-        for (uint256 i; i < _signers.length; i++)
-            signers[_signers[i]] = true;
+        for (uint256 i; i < _signers.length; i++) signers[_signers[i]] = true;
     }
 
     receive() external payable {}
@@ -78,7 +77,10 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         require(msg.value >= price * amount_, "tx value is not correct");
         require(presaleAmount < maxPresale, "presale out");
         require(!usedNonce[nonce_], "nonce is used");
-        require(verify(msg.sender, address(this), nonce_, signature_), "sign is not correct");
+        require(
+            verify(msg.sender, address(this), nonce_, signature_),
+            "sign is not correct"
+        );
         if (presaleAmount + amount_ > maxPresale)
             amount_ = uint128(maxPresale - presaleAmount);
 
@@ -104,7 +106,18 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         require(_exists(tokenID_), "token is not exist");
         require(!usedNonce[nonce_], "nonce is used");
         require(attrIDs_.length == attrValues_.length, "param length error");
-        require(verify(msg.sender, address(this), tokenID_, nonce_, attrIDs_, attrValues_, signature_), "sign is not correct");
+        require(
+            verify(
+                msg.sender,
+                address(this),
+                tokenID_,
+                nonce_,
+                attrIDs_,
+                attrValues_,
+                signature_
+            ),
+            "sign is not correct"
+        );
         usedNonce[nonce_] = true;
 
         _attachBatch(tokenID_, attrIDs_, attrValues_);
@@ -119,7 +132,17 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         bytes memory signature_
     ) public whenNotPaused {
         require(!usedNonce[nonce_], "nonce is used");
-        require(verify(msg.sender, address(this), nonce_, attrIDs_, attrValues_, signature_), "sign is not correct");
+        require(
+            verify(
+                msg.sender,
+                address(this),
+                nonce_,
+                attrIDs_,
+                attrValues_,
+                signature_
+            ),
+            "sign is not correct"
+        );
         require(attrIDs_.length == attrValues_.length, "param length error");
         usedNonce[nonce_] = true;
 
@@ -150,7 +173,7 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         address contract_,
         uint256 nonce_,
         bytes memory signature_
-    ) internal view returns (bool){
+    ) internal view returns (bool) {
         return signers[signatureWallet(wallet_, contract_, nonce_, signature_)];
     }
 
@@ -159,10 +182,8 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         address contract_,
         uint256 nonce_,
         bytes memory signature_
-    ) internal pure returns (address){
-        bytes32 hash = keccak256(
-            abi.encode(wallet_, contract_, nonce_)
-        );
+    ) internal pure returns (address) {
+        bytes32 hash = keccak256(abi.encode(wallet_, contract_, nonce_));
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signature_);
     }
 
@@ -173,8 +194,18 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         uint128[] memory attrIDs_,
         uint128[] memory attrValues_,
         bytes memory signature_
-    ) internal view returns (bool){
-        return signers[signatureWallet(wallet_, contract_, nonce_, attrIDs_, attrValues_, signature_)];
+    ) internal view returns (bool) {
+        return
+            signers[
+                signatureWallet(
+                    wallet_,
+                    contract_,
+                    nonce_,
+                    attrIDs_,
+                    attrValues_,
+                    signature_
+                )
+            ];
     }
 
     function signatureWallet(
@@ -184,7 +215,7 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         uint128[] memory attrIDs_,
         uint128[] memory attrValues_,
         bytes memory signature_
-    ) internal pure returns (address){
+    ) internal pure returns (address) {
         bytes32 hash = keccak256(
             abi.encode(wallet_, contract_, nonce_, attrIDs_, attrValues_)
         );
@@ -200,8 +231,19 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         uint128[] memory attrIDs_,
         uint128[] memory attrValues_,
         bytes memory signature_
-    ) internal view returns (bool){
-        return signers[signatureWallet(wallet_, contract_, tokenID_, nonce_, attrIDs_, attrValues_, signature_)];
+    ) internal view returns (bool) {
+        return
+            signers[
+                signatureWallet(
+                    wallet_,
+                    contract_,
+                    tokenID_,
+                    nonce_,
+                    attrIDs_,
+                    attrValues_,
+                    signature_
+                )
+            ];
     }
 
     function signatureWallet(
@@ -212,9 +254,16 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         uint128[] memory attrIDs_,
         uint128[] memory attrValues_,
         bytes memory signature_
-    ) internal pure returns (address){
+    ) internal pure returns (address) {
         bytes32 hash = keccak256(
-            abi.encode(wallet_, contract_, tokenID_, nonce_, attrIDs_, attrValues_)
+            abi.encode(
+                wallet_,
+                contract_,
+                tokenID_,
+                nonce_,
+                attrIDs_,
+                attrValues_
+            )
         );
 
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signature_);
@@ -272,35 +321,51 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         _cap = cap;
     }
 
-    function create(uint128 attrID_, uint8 decimals_) override public onlyOwner {
-        super.create(attrID_, decimals_);
-    }
-
-    function createBatch(uint128[] memory attrIDs_, uint8[] memory decimals_) override public onlyOwner {
-        super.createBatch(attrIDs_, decimals_);
-    }
-
-    function attach(uint256 tokenID_, uint128 attrID_, uint128 _value) override public onlyTreasure {
+    function attach(
+        uint256 tokenID_,
+        uint128 attrID_,
+        uint128 _value
+    ) public override onlyTreasure {
         _attach(tokenID_, attrID_, _value);
     }
 
-    function attachBatch(uint256 tokenID_, uint128[] memory attrIDs_, uint128[] memory _values) override public onlyTreasure {
+    function attachBatch(
+        uint256 tokenID_,
+        uint128[] memory attrIDs_,
+        uint128[] memory _values
+    ) public override onlyTreasure {
         _attachBatch(tokenID_, attrIDs_, _values);
     }
 
-    function remove(uint256 tokenID_, uint256 attrIndex_) override public onlyTreasure {
+    function remove(uint256 tokenID_, uint256 attrIndex_)
+        public
+        override
+        onlyTreasure
+    {
         _remove(tokenID_, attrIndex_);
     }
 
-    function removeBatch(uint256 tokenID_, uint256[] memory attrIndexes_) override public onlyTreasure {
+    function removeBatch(uint256 tokenID_, uint256[] memory attrIndexes_)
+        public
+        override
+        onlyTreasure
+    {
         _removeBatch(tokenID_, attrIndexes_);
     }
 
-    function update(uint256 tokenID_, uint256 attrIndex_, uint128 value_) override public onlyTreasure {
+    function update(
+        uint256 tokenID_,
+        uint256 attrIndex_,
+        uint128 value_
+    ) public override onlyTreasure {
         _update(tokenID_, attrIndex_, value_);
     }
 
-    function updateBatch(uint256 tokenID_, uint256[] memory attrIndexes_, uint128[] memory values_) override public onlyTreasure {
+    function updateBatch(
+        uint256 tokenID_,
+        uint256[] memory attrIndexes_,
+        uint128[] memory values_
+    ) public override onlyTreasure {
         _updateBatch(tokenID_, attrIndexes_, values_);
     }
 
@@ -331,17 +396,17 @@ contract GameLootEquipment is GameLoot, Pausable, Ownable {
         uint256 tokenId
     ) internal override {
         if (from == address(0)) {
-            totalSupply ++;
+            totalSupply++;
             require(totalSupply <= maxSupply, "sold out");
         }
     }
 
-    modifier onlyTreasure(){
+    modifier onlyTreasure() {
         require(msg.sender == treasure, "is not treasure");
         _;
     }
 
-    modifier onlyController(){
+    modifier onlyController() {
         require(msg.sender == controller, "only controller");
         _;
     }

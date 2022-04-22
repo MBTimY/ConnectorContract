@@ -29,5 +29,9 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "truffle": "^5.5.10",
+    "truffle-flattener": "^1.6.0"
   }
 }

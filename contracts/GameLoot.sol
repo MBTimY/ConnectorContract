@@ -7,20 +7,11 @@ import "./Base64.sol";
 import "./Struct.sol";
 
 abstract contract GameLoot is ERC721, IGameLoot {
-    struct AttributeBaseData {
-        uint8 decimal;
-        bool exist;
-    }
-
-    // attrID => decimal
-    mapping(uint128 => AttributeBaseData) internal _attrBaseData;
     // tokenID => attribute data
     mapping(uint256 => AttributeData[]) internal _attrData;
 
     uint256 internal _cap;
 
-    event CreateAttribute(uint128 attrID, uint8 decimal);
-    event CreateAttributeBatch(uint128[] attrIDs, uint8[] decimals);
     event AttributeAttached(uint256 tokenID, uint128 attrID, uint128 value);
     event AttributeAttachedBatch(uint256 tokenID, uint128[] attrIDs, uint128[] values);
     event AttributeUpdated(uint256 tokenID, uint256 attrIndex, uint128 value);
@@ -32,37 +23,11 @@ abstract contract GameLoot is ERC721, IGameLoot {
         _cap = cap_;
     }
 
-    function attributeDecimals(uint128 _attrID) public override virtual view returns (uint8) {
-        return _attrBaseData[_attrID].decimal;
-    }
-
     function attributes(uint256 _tokenID) public virtual view returns (AttributeData[] memory) {
         return _attrData[_tokenID];
     }
 
-    function create(uint128 _id, uint8 _decimal) public override virtual {
-        _create(_id, _decimal);
-    }
-
-    function createBatch(uint128[] memory _ids, uint8[] memory _decimals) public override virtual {
-        _createBatch(_ids, _decimals);
-    }
-
-    function _create(uint128 _attrID, uint8 _decimal) internal virtual {
-        _attrBaseData[_attrID] = AttributeBaseData(_decimal, true);
-        emit CreateAttribute(_attrID, _decimal);
-    }
-
-    function _createBatch(uint128[] memory _attrIDs, uint8[] memory _decimals) internal virtual {
-        require(_attrIDs.length == _decimals.length, "GameLoot: param length error");
-        for (uint256 i; i < _attrIDs.length; i++) {
-            _attrBaseData[_attrIDs[i]] = AttributeBaseData(_decimals[i], true);
-        }
-        emit CreateAttributeBatch(_attrIDs, _decimals);
-    }
-
     function _attach(uint256 tokenID, uint128 attrID, uint128 value) internal virtual {
-        require(_attrBaseData[attrID].exist, "GameLoot: attribute is not existed");
         require(_attrData[tokenID].length + 1 <= _cap, "GameLoot: too many attributes");
         _attrData[tokenID].push(AttributeData(attrID, value));
         emit AttributeAttached(tokenID, attrID, value);
@@ -71,7 +36,6 @@ abstract contract GameLoot is ERC721, IGameLoot {
     function _attachBatch(uint256 tokenID, uint128[] memory attrIDs, uint128[] memory values) internal virtual {
         require(_attrData[tokenID].length + attrIDs.length <= _cap, "GameLoot: too many attributes");
         for (uint256 i; i < attrIDs.length; i++) {
-            require(_attrBaseData[attrIDs[i]].exist, "GameLoot: attribute is not existed");
             _attrData[tokenID].push(AttributeData(attrIDs[i], values[i]));
         }
         emit AttributeAttachedBatch(tokenID, attrIDs, values);
@@ -146,6 +110,10 @@ abstract contract GameLoot is ERC721, IGameLoot {
     function tokenURIGame(uint256 tokenID, address registry) public view returns (string memory){
         GameLoot dataContract = GameLoot(registry);
         return dataContract.tokenURI(tokenID);
+    }
+
+    function decimals() public pure returns (uint8) {
+        return 18;
     }
 
     function toString(uint256 value) internal pure returns (string memory) {

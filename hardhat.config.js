@@ -40,7 +40,7 @@ module.exports = {
         rinkeby: {
             url: process.env.RINKEBY_URL || "",
             accounts:
-                process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+                process.env.PRIVATE_KEY_LAST !== undefined ? [process.env.PRIVATE_KEY_LAST] : [],
         },
         bsc: {
             url: process.env.BSC_URL || "",
@@ -58,6 +58,6 @@ module.exports = {
         currency: "USD",
     },
     etherscan: {
-        apiKey: process.env.BSC_API_KEY,
+        apiKey: process.env.ETHERSCAN_API_KEY,
     },
 };

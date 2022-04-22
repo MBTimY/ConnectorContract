@@ -3,21 +3,6 @@ pragma solidity ^0.8.0;
 
 interface IGameLoot {
     /**
-     * @dev Returns the decimals places of the attribute.
-     */
-    function attributeDecimals(uint128 attrID) external view returns (uint8);
-
-    /**
-     * @dev Create new attribute.
-     */
-    function create(uint128 attrID, uint8 decimals) external;
-
-    /**
-     * @dev Create a batch of new attributes.
-     */
-    function createBatch(uint128[] memory attrIDs, uint8[] memory decimals) external;
-
-    /**
      * @dev Attach the attribute to NFT.
      */
     function attach(uint256 tokenID, uint128 attrID, uint128 value) external;
