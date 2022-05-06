@@ -210,6 +210,15 @@ contract GameDaoFixedNFT is Configurable, IERC721ReceiverUpgradeable {
         emit NewPrice(msg.sender, index, price);
     }
 
+    function triggerToken0Check() external governance {
+        checkToken0  = !checkToken0;
+    }
+
+    function triggerToken0(address token) external governance {
+        token0List[token] = !(token0List[token]);
+    }
+
+
     function transferGovernor(address _governor) external {
         require(msg.sender == governor || governor == address(0), "invalid governor");
         governor = _governor;
