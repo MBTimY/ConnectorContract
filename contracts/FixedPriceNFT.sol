@@ -45,6 +45,9 @@ contract GameDaoFixedNFT is Configurable, IERC721ReceiverUpgradeable {
     // token0 address => true or false
     mapping(address => bool) public token0List;
 
+    bool public checkToken1;
+    mapping(address => bool) public token1List;
+
     // pool index => swapped amount of token0
     mapping(uint256 => uint256) public swappedAmount0P;
     // pool index => swapped amount of token1
@@ -90,9 +93,16 @@ contract GameDaoFixedNFT is Configurable, IERC721ReceiverUpgradeable {
         if (checkToken0) {
             require(token0List[token0], "invalid token0");
         }
+
+        address purchaseToken = address(0);
+        if (checkToken1) {
+            require(token1List[token1], "invalid token1");
+            purchaseToken = token1;
+        }
+
         uint256 amountTotal0 = 1;
         _create(
-            token0, token1, tokenId, amountTotal0, amountTotal1,
+            token0, purchaseToken, tokenId, amountTotal0, amountTotal1,
             duration
         );
     }
@@ -217,6 +227,15 @@ contract GameDaoFixedNFT is Configurable, IERC721ReceiverUpgradeable {
     function triggerToken0(address token) external governance {
         token0List[token] = !(token0List[token]);
     }
+
+    function triggerToken1Check() external governance {
+        checkToken1  = !checkToken1;
+    }
+
+    function triggerToken1(address token) external governance {
+        token1List[token] = !(token1List[token]);
+    }
+
 
 
     function transferGovernor(address _governor) external {
